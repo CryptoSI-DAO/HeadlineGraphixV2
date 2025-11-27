@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Home, Newspaper, ImageIcon, History, Settings } from 'lucide-react';
+import { Bot, Home, Newspaper, ImageIcon, History, Settings, Sparkles, LayoutTemplate, Archive } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -17,9 +17,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/generate-content', label: 'Generate Content', icon: Sparkles },
   { href: '/headlines', label: 'Headlines', icon: Newspaper },
-  { href: '/reference-images', label: 'Reference Images', icon: ImageIcon },
-  { href: '/history', label: 'History', icon: History },
+  { href: '/generate-image', label: 'Generate Image', icon: ImageIcon },
+  { href: '/image-archive', label: 'Image Archive', icon: Archive },
+  { href: '/brand-kits', label: 'Brand Kits', icon: LayoutTemplate },
 ];
 
 const settingsItem = { href: '/settings', label: 'Settings', icon: Settings };
