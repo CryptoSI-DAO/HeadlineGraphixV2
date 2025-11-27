@@ -90,11 +90,9 @@ export default function DashboardPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <Link href="/headlines" passHref legacyBehavior>
-                    <Button asChild variant="secondary" size="lg" className="w-full md:w-auto">
-                        <a>Fetch Latest Headlines <ArrowRight className="ml-2 h-4 w-4" /></a>
-                    </Button>
-                </Link>
+                <Button asChild variant="secondary" size="lg" className="w-full md:w-auto">
+                    <Link href="/headlines">Fetch Latest Headlines <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
             </CardContent>
         </Card>
 

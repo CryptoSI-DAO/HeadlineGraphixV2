@@ -41,15 +41,16 @@ export default function AppSidebar() {
         <SidebarMenu className="p-2">
             {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
                     tooltip={{ children: item.label }}
                 >
+                  <Link href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
+                  </Link>
                 </SidebarMenuButton>
-                </Link>
             </SidebarMenuItem>
             ))}
         </SidebarMenu>
@@ -57,15 +58,16 @@ export default function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
             <SidebarMenuItem>
-                <Link href={settingsItem.href} passHref legacyBehavior>
-                    <SidebarMenuButton
-                        isActive={pathname === settingsItem.href}
-                        tooltip={{ children: settingsItem.label }}
-                    >
-                        <settingsItem.icon />
-                        <span>{settingsItem.label}</span>
-                    </SidebarMenuButton>
-                </Link>
+                <SidebarMenuButton
+                    asChild
+                    isActive={pathname === settingsItem.href}
+                    tooltip={{ children: settingsItem.label }}
+                >
+                  <Link href={settingsItem.href}>
+                    <settingsItem.icon />
+                    <span>{settingsItem.label}</span>
+                  </Link>
+                </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
         <Separator className="my-2" />
