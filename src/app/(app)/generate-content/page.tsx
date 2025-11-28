@@ -1,7 +1,10 @@
+
 'use client';
 
 import { useState } from 'react';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,19 +32,15 @@ import { MOCK_DRAFTS } from '@/lib/mock-data';
 import {
   Sparkles,
   CheckCircle,
-  ClipboardCopy,
-  Download,
-  FilePenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { GeneratedContent } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import { ImageUploader } from '@/components/ImageUploader';
 
 const brandTones = ['Momentum Inc.'];
 
 export default function GenerateContentPage() {
-  const { addHistoryItem, preferences } = useAppContext();
+  const { addHistoryItem } = useAppContext();
   const { toast } = useToast();
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -197,42 +196,30 @@ export default function GenerateContentPage() {
                     <Skeleton className="h-4 w-1/2 mt-4" />
                   </div>
                 ) : drafts ? (
-                  <Tabs defaultValue="blog" className="w-full">
+                  <Tabs defaultValue="draft" className="w-full">
                     <div className="flex items-center px-4 pt-4 border-b">
                         <TabsList>
-                            <TabsTrigger value="blog">Blog Draft</TabsTrigger>
-                            <TabsTrigger value="linkedin">LinkedIn Post</TabsTrigger>
-                            <TabsTrigger value="visual">Visual Asset</TabsTrigger>
+                            <TabsTrigger value="draft">Draft</TabsTrigger>
+                            <TabsTrigger value="preview">Preview</TabsTrigger>
+                            <TabsTrigger value="images">Images</TabsTrigger>
                         </TabsList>
                     </div>
-                    <TabsContent value="blog" className="p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <Badge variant="outline">Draft</Badge>
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon"><ClipboardCopy size={16} /></Button>
-                                <Button variant="ghost" size="icon"><FilePenLine size={16} /></Button>
-                                <Button variant="ghost" size="icon"><Download size={16} /></Button>
-                            </div>
-                        </div>
+                    <TabsContent value="draft" className="p-6">
+                        <Textarea 
+                            className="min-h-[400px] text-base font-mono bg-muted/50"
+                            value={drafts.blogPost}
+                            onChange={(e) => setDrafts({...drafts, blogPost: e.target.value})}
+                         />
+                    </TabsContent>
+                    <TabsContent value="preview" className="p-6">
                         <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                            <pre className="whitespace-pre-wrap font-sans bg-transparent p-0">{drafts.blogPost}</pre>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {drafts.blogPost}
+                            </ReactMarkdown>
                         </div>
                     </TabsContent>
-                    <TabsContent value="linkedin" className="p-6">
-                        <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                            <pre className="whitespace-pre-wrap font-sans bg-transparent p-0">{drafts.linkedInPost}</pre>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="visual" className="p-6 flex justify-center">
-                      <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden border">
-                        <Image
-                          src={drafts.infographic}
-                          alt="Generated Infographic"
-                          fill
-                          className="object-cover"
-                          data-ai-hint="infographic design"
-                        />
-                      </div>
+                    <TabsContent value="images" className="p-6">
+                      <ImageUploader />
                     </TabsContent>
                   </Tabs>
                 ) : (
