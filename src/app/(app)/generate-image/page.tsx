@@ -143,12 +143,9 @@ export default function GenerateImagePage() {
     <>
       <Header title="Infographic Generation" />
       <main className="flex-1 p-4 md:p-6">
-        <p className="text-muted-foreground mb-8 max-w-2xl">
-          Provide the content and branding for your infographic, and let our AI create a unique visual asset for you.
-        </p>
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Panel: Configuration */}
-          <Card className="flex flex-col h-[calc(100vh-12rem)]">
+          <Card className="flex flex-col h-[calc(100vh-10rem)]">
             <CardHeader>
               <CardTitle>1. Configure Infographic</CardTitle>
             </CardHeader>
@@ -379,3 +376,5 @@ export default function GenerateImagePage() {
     </>
   );
 }
+
+    
