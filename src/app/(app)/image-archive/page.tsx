@@ -65,11 +65,6 @@ export default function ImageArchivePage() {
     <>
       <Header title="Image Archive">
         <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={() => setIsUploadModalOpen(true)} disabled={referenceImages.length >= TOTAL_SLOTS}>
-                    <Upload className="mr-2 h-4 w-4" /> Upload
-                </Button>
-            </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Upload Image</DialogTitle>
