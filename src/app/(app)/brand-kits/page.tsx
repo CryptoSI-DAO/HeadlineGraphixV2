@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -94,24 +94,17 @@ const EditBrandModal = ({
   preset,
   onClose,
   onSave,
+  onFieldChange,
 }: {
   preset: BrandPreset | null;
   onClose: () => void;
-  onSave: (updatedPreset: BrandPreset) => void;
+  onSave: () => void;
+  onFieldChange: (field: keyof BrandPreset, value: string) => void;
 }) => {
-  const [editedPreset, setEditedPreset] = useState<BrandPreset | null>(preset);
 
-  if (!editedPreset) return null;
+  if (!preset) return null;
 
-  const handleInputChange = (field: keyof BrandPreset, value: string) => {
-    setEditedPreset({ ...editedPreset, [field]: value });
-  };
-  
-  const handleSaveChanges = () => {
-    onSave(editedPreset);
-  };
-
-  const isArtStyleOther = !['Geometric', 'Cartoon', 'Minimalist'].includes(editedPreset.artStyle);
+  const isArtStyleOther = !['Geometric', 'Cartoon', 'Minimalist'].includes(preset.artStyle);
 
   return (
     <Dialog open={!!preset} onOpenChange={onClose}>
@@ -126,38 +119,38 @@ const EditBrandModal = ({
             </Label>
             <Input
               id="brand-name"
-              value={editedPreset.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              value={preset.name}
+              onChange={(e) => onFieldChange('name', e.target.value)}
               className="col-span-3"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Primary Color</Label>
             <div className="col-span-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.primaryColor }} />
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: preset.primaryColor }} />
                 <Input
-                    value={editedPreset.primaryColor}
-                    onChange={(e) => handleInputChange('primaryColor', e.target.value)}
+                    value={preset.primaryColor}
+                    onChange={(e) => onFieldChange('primaryColor', e.target.value)}
                 />
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Secondary Color</Label>
             <div className="col-span-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.secondaryColor }} />
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: preset.secondaryColor }} />
                 <Input
-                    value={editedPreset.secondaryColor}
-                    onChange={(e) => handleInputChange('secondaryColor', e.target.value)}
+                    value={preset.secondaryColor}
+                    onChange={(e) => onFieldChange('secondaryColor', e.target.value)}
                 />
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Trim Color</Label>
             <div className="col-span-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.trimColor }} />
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: preset.trimColor }} />
                 <Input
-                    value={editedPreset.trimColor}
-                    onChange={(e) => handleInputChange('trimColor', e.target.value)}
+                    value={preset.trimColor}
+                    onChange={(e) => onFieldChange('trimColor', e.target.value)}
                 />
             </div>
           </div>
@@ -167,8 +160,8 @@ const EditBrandModal = ({
             </Label>
             <Input
               id="font-family"
-              value={editedPreset.font}
-              onChange={(e) => handleInputChange('font', e.target.value)}
+              value={preset.font}
+              onChange={(e) => onFieldChange('font', e.target.value)}
               className="col-span-3"
             />
           </div>
@@ -178,12 +171,12 @@ const EditBrandModal = ({
             </Label>
             <div className="col-span-3 space-y-2">
                 <Select 
-                    value={isArtStyleOther ? "Other" : editedPreset.artStyle} 
+                    value={isArtStyleOther ? "Other" : preset.artStyle} 
                     onValueChange={(value) => {
                         if (value !== 'Other') {
-                            handleInputChange('artStyle', value);
+                            onFieldChange('artStyle', value);
                         } else {
-                            handleInputChange('artStyle', '');
+                            onFieldChange('artStyle', '');
                         }
                     }}>
                     <SelectTrigger>
@@ -198,8 +191,8 @@ const EditBrandModal = ({
                 </Select>
                 {isArtStyleOther && (
                      <Input
-                        value={editedPreset.artStyle}
-                        onChange={(e) => handleInputChange('artStyle', e.target.value)}
+                        value={preset.artStyle}
+                        onChange={(e) => onFieldChange('artStyle', e.target.value)}
                         placeholder="Afro-Futuristic Minimalism"
                     />
                 )}
@@ -218,7 +211,7 @@ const EditBrandModal = ({
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" onClick={handleSaveChanges}>Save Changes</Button>
+          <Button type="submit" onClick={onSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -231,16 +224,24 @@ export default function BrandKitsPage() {
   const [editingPreset, setEditingPreset] = useState<BrandPreset | null>(null);
 
   const handleEditClick = (preset: BrandPreset) => {
-    setEditingPreset(preset);
+    setEditingPreset({ ...preset });
   };
 
   const handleCloseModal = () => {
     setEditingPreset(null);
   };
+  
+  const handleFieldChange = (field: keyof BrandPreset, value: string) => {
+    if (editingPreset) {
+      setEditingPreset({ ...editingPreset, [field]: value });
+    }
+  };
 
-  const handleSavePreset = (updatedPreset: BrandPreset) => {
-    setAllPresets(allPresets.map(p => p.id === updatedPreset.id ? updatedPreset : p));
-    setEditingPreset(null);
+  const handleSavePreset = () => {
+    if (editingPreset) {
+        setAllPresets(allPresets.map(p => p.id === editingPreset.id ? editingPreset : p));
+        setEditingPreset(null);
+    }
   }
 
   const presets = [...allPresets];
@@ -334,8 +335,8 @@ export default function BrandKitsPage() {
         preset={editingPreset}
         onClose={handleCloseModal}
         onSave={handleSavePreset}
+        onFieldChange={handleFieldChange}
       />
     </>
   );
 }
-
