@@ -26,64 +26,99 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_DRAFTS } from '@/lib/mock-data';
+import type { GenerateContentDraftsOutput } from '@/ai/flows/generate-content-drafts';
+import { generateContentDrafts } from '@/ai/flows/generate-content-drafts';
 import {
   Sparkles,
   CheckCircle,
   Clipboard,
   Pencil,
   PlusSquare,
+  Expand,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const brandTones = ['Momentum Inc.'];
+const MOCK_ARTICLE = "In an era where digital presence is paramount, small and medium-sized businesses (SMBs) are increasingly turning to Artificial Intelligence (AI) to gain a competitive edge. AI-powered marketing tools, once the exclusive domain of large corporations with deep pockets, are now more accessible than ever. These tools offer sophisticated capabilities—from hyper-personalized customer communication and predictive analytics to automated content creation and dynamic ad optimization. By leveraging AI, SMBs can not only streamline their marketing operations but also uncover deep insights into customer behavior, allowing them to craft more effective and targeted campaigns. This technological shift is leveling the playing field, enabling smaller players to compete more effectively and achieve significant growth in a crowded marketplace.";
+
 
 export default function GenerateContentPage() {
   const { addHistoryItem } = useAppContext();
   const { toast } = useToast();
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [drafts, setDrafts] = useState<typeof MOCK_DRAFTS | null>(null);
+  const [drafts, setDrafts] = useState<GenerateContentDraftsOutput | null>(null);
 
+  const [headline, setHeadline] = useState('AI-Powered Content Generation');
+  const [useFullArticle, setUseFullArticle] = useState<'yes' | 'no'>('no');
   const [brandTone, setBrandTone] = useState(brandTones[0]);
   const [selectedImage, setSelectedImage] = useState(PlaceHolderImages[0].imageUrl);
   const [userAngle, setUserAngle] = useState('');
   const [includeBacklinks, setIncludeBacklinks] = useState(true);
+  
   const [activeTab, setActiveTab] = useState('draft');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
-  const handleGenerate = () => {
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const handleGenerate = async () => {
     setIsGenerating(true);
     setDrafts(null);
-    setTimeout(() => {
-      const generatedDrafts = {
-        blogPost: `### Unlocking Growth: How AI is Revolutionizing Small Business Marketing\n\nIn today's competitive landscape, small businesses are constantly seeking innovative ways to stand out. Artificial Intelligence (AI) has emerged as a game-changer, offering powerful tools that were once exclusive to large corporations. From personalized customer experiences to data-driven campaign optimization, AI is leveling the playing field.\n\nLet's explore how you can leverage AI to supercharge your marketing efforts and drive sustainable growth. By focusing on the impact of AI on small business marketing strategies, we can uncover practical applications that deliver real results.\n\n- Automated Content Creation\n- Predictive Analytics for Customer Behavior\n- Hyper-Personalization at Scale`,
-        linkedInPost: MOCK_DRAFTS.linkedInPost,
-        infographic: MOCK_DRAFTS.infographic,
-      };
+    
+    try {
+      const imageAsDataUrl = await getBase64FromUrl(selectedImage);
+
+      const generatedDrafts = await generateContentDrafts({
+        headline,
+        articleContent: useFullArticle === 'yes' ? MOCK_ARTICLE : undefined,
+        brandTone,
+        referenceImage: imageAsDataUrl,
+        userAngle,
+      });
+
       setDrafts(generatedDrafts);
-      setIsGenerating(false);
       toast({
         title: 'Drafts Generated',
         description: 'Your new content drafts are ready for review.',
       });
-    }, 2000);
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Generation Failed',
+        description: 'Could not generate content. Please try again.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSave = (slot: number) => {
     if (!drafts) return;
     addHistoryItem({
-      headline: 'AI-Powered Content Generation',
+      headline,
       config: { brandTone, referenceImage: selectedImage, userAngle },
       drafts,
     });
@@ -117,6 +152,41 @@ export default function GenerateContentPage() {
           {/* Left Panel: Configuration */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">1. Set Your Inputs</h2>
+            
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="headline">Headline</Label>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm"><Expand className="mr-2" /> View Story</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>{headline}</DialogTitle>
+                                <DialogDescription>Full article content</DialogDescription>
+                            </DialogHeader>
+                            <div className="prose max-w-none dark:prose-invert max-h-[60vh] overflow-y-auto">
+                                <p>{MOCK_ARTICLE}</p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                <Input id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
+                 <div className="flex items-center space-x-4 pt-2">
+                    <Label>Use full article for context?</Label>
+                    <RadioGroup value={useFullArticle} onValueChange={(value: 'yes'|'no') => setUseFullArticle(value)} className="flex items-center">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="yes" id="r-yes" />
+                            <Label htmlFor="r-yes">Yes</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="no" id="r-no" />
+                            <Label htmlFor="r-no">No</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+            </div>
+
             <div className="space-y-4">
               <Label htmlFor="brand-preset">Brand Preset</Label>
               <Select value={brandTone} onValueChange={setBrandTone}>
@@ -216,6 +286,7 @@ export default function GenerateContentPage() {
                         <TabsList>
                             <TabsTrigger value="draft">Draft</TabsTrigger>
                             <TabsTrigger value="preview">Preview</TabsTrigger>
+                            <TabsTrigger value="infographic">Infographic</TabsTrigger>
                         </TabsList>
                         <div className="flex items-center gap-2">
                             {activeTab === 'preview' && (
@@ -240,6 +311,11 @@ export default function GenerateContentPage() {
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {drafts.blogPost}
                             </ReactMarkdown>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="infographic" className="mt-4 p-6 flex justify-center">
+                        <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden border">
+                            <Image src={drafts.infographic} alt="Generated Infographic" fill className="object-cover" />
                         </div>
                     </TabsContent>
                   </Tabs>

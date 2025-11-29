@@ -13,8 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_HEADLINES, MOCK_DRAFTS } from '@/lib/mock-data';
+import { MOCK_HEADLINES } from '@/lib/mock-data';
 import type { Headline } from '@/lib/types';
+import type { GenerateContentDraftsOutput } from '@/ai/flows/generate-content-drafts';
+import { generateContentDrafts } from '@/ai/flows/generate-content-drafts';
 import { Sparkles, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -29,7 +31,7 @@ export default function StudioPage() {
 
   const [headline, setHeadline] = useState<Headline | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [drafts, setDrafts] = useState<typeof MOCK_DRAFTS | null>(null);
+  const [drafts, setDrafts] = useState<GenerateContentDraftsOutput | null>(null);
 
   const [brandTone, setBrandTone] = useState(brandTones[0]);
   const [selectedImage, setSelectedImage] = useState(PlaceHolderImages[0].imageUrl);
@@ -37,16 +39,53 @@ export default function StudioPage() {
 
   useEffect(() => {
     const foundHeadline = MOCK_HEADLINES.find(h => h.slug === slug);
-    setHeadline(foundHeadline || null);
+    if (foundHeadline) {
+        setHeadline(foundHeadline);
+    }
   }, [slug]);
 
-  const handleGenerate = () => {
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const handleGenerate = async () => {
+    if (!headline) return;
+
     setIsGenerating(true);
     setDrafts(null);
-    setTimeout(() => {
-      setDrafts(MOCK_DRAFTS);
-      setIsGenerating(false);
-    }, 3000); // Simulate 3-second AI generation
+    
+    try {
+      const imageAsDataUrl = await getBase64FromUrl(selectedImage);
+
+      const generatedDrafts = await generateContentDrafts({
+        headline: headline.title,
+        brandTone,
+        referenceImage: imageAsDataUrl,
+        userAngle,
+      });
+
+      setDrafts(generatedDrafts);
+      toast({
+        title: 'Drafts Generated',
+        description: 'Your new content drafts are ready for review.',
+      });
+    } catch (error) {
+        console.error(error);
+        toast({
+            variant: 'destructive',
+            title: 'Generation Failed',
+            description: 'Could not generate content. Please try again.',
+        });
+    } finally {
+        setIsGenerating(false);
+    }
   };
 
   const handleSave = () => {
@@ -69,7 +108,7 @@ export default function StudioPage() {
         <>
             <Header title="Content Studio" />
             <main className="flex-1 p-6 text-center">
-                <p>Headline not found.</p>
+                <p>Loading headline...</p>
             </main>
         </>
     );
@@ -129,7 +168,7 @@ export default function StudioPage() {
           </CardHeader>
           <CardContent>
             {isGenerating ? (
-                <div className="space-y-4">
+                <div className="space-y-4 p-4">
                     <Skeleton className="h-8 w-1/3" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
@@ -143,10 +182,10 @@ export default function StudioPage() {
                   <TabsTrigger value="infographic">Infographic</TabsTrigger>
                 </TabsList>
                 <TabsContent value="blog" className="mt-4">
-                    <Textarea className="min-h-[400px] text-base" defaultValue={drafts.blogPost} />
+                    <Textarea className="min-h-[400px] text-base" value={drafts.blogPost} onChange={(e) => setDrafts({...drafts, blogPost: e.target.value})} />
                 </TabsContent>
                 <TabsContent value="linkedin" className="mt-4">
-                    <Textarea className="min-h-[200px] text-base" defaultValue={drafts.linkedInPost} />
+                    <Textarea className="min-h-[200px] text-base" value={drafts.linkedInPost}  onChange={(e) => setDrafts({...drafts, linkedInPost: e.target.value})} />
                 </TabsContent>
                 <TabsContent value="infographic" className="mt-4">
                     <div className="relative aspect-[2/3] w-full max-w-md mx-auto rounded-lg overflow-hidden border">

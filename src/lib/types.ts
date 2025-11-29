@@ -1,4 +1,5 @@
 import type { ImagePlaceholder } from "./placeholder-images";
+import type { GenerateContentDraftsOutput } from "@/ai/flows/generate-content-drafts";
 
 export type Headline = {
   id: string;
@@ -6,6 +7,7 @@ export type Headline = {
   title: string;
   source: string;
   date: string;
+  content?: string;
 };
 
 export type GeneratedContent = {
@@ -18,11 +20,7 @@ export type GeneratedContent = {
     referenceImage: string; // url
     userAngle: string;
   };
-  drafts: {
-    blogPost: string;
-    linkedInPost: string;
-    infographic: string; // url
-  };
+  drafts: GenerateContentDraftsOutput;
 };
 
 export type UserPreferences = {
