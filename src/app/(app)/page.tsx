@@ -56,6 +56,9 @@ export default function DashboardPage() {
                     <div className="text-2xl font-bold">50</div>
                     <p className="text-xs text-muted-foreground">credits remaining this month</p>
                 </CardContent>
+                <CardFooter>
+                  <Button className="w-full">Top-up Credits</Button>
+                </CardFooter>
             </Card>
         </div>
 
