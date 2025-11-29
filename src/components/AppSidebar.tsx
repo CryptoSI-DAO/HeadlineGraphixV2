@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Home, Newspaper, ImageIcon, Library, Settings, Sparkles, LayoutTemplate, Archive } from 'lucide-react';
+import { Bot, Home, Newspaper, ImageIcon, Library, Sparkles, LayoutTemplate, Archive } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
@@ -24,8 +25,6 @@ const navItems = [
   { href: '/content-library', label: 'Content Library', icon: Library },
   { href: '/brand-kits', label: 'Brand Kits', icon: LayoutTemplate },
 ];
-
-const settingsItem = { href: '/settings', label: 'Settings', icon: Settings };
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -59,20 +58,6 @@ export default function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === settingsItem.href}
-                    tooltip={{ children: settingsItem.label }}
-                >
-                  <Link href={settingsItem.href}>
-                    <settingsItem.icon />
-                    <span>{settingsItem.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
         <Separator className="my-2" />
         <div className="p-2 flex items-center gap-3" data-collapsible-hide>
             <Avatar className="h-9 w-9">
