@@ -17,8 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/generate-content', label: 'Generate Content', icon: Sparkles },
   { href: '/headlines', label: 'Headlines', icon: Newspaper },
+  { href: '/generate-content', label: 'Generate Content', icon: Sparkles },
   { href: '/generate-image', label: 'Generate Image', icon: ImageIcon },
   { href: '/image-archive', label: 'Image Archive', icon: Archive },
   { href: '/content-library', label: 'Content Library', icon: Library },
