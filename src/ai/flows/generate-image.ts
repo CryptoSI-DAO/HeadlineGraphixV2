@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
   brand: z.string().describe('The brand style to apply.'),
+  referenceImages: z.array(z.string()).optional().describe('An array of reference image URLs.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -33,6 +34,8 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async input => {
+    // Note: The flow currently doesn't use the reference images.
+    // This is a placeholder for future implementation.
     const { media } = await ai.generate({
       model: 'googleai/imagen-4.0-fast-generate-001',
       prompt: `Generate an image for the following story: ${input.prompt}. Apply the following brand style: ${input.brand}.`,

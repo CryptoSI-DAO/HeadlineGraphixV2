@@ -29,9 +29,24 @@ import {
   Download,
   ImageIcon,
   FileText,
+  Plus,
+  X,
 } from 'lucide-react';
 import { generateImage } from '@/ai/flows/generate-image';
 import type { GenerateImageOutput } from '@/ai/flows/generate-image';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ImageUploader } from '@/components/ImageUploader';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { cn } from '@/lib/utils';
+
 
 const brandTones = ['Momentum Inc.'];
 const aiModels = ['Visionary V3 (Recommended)', 'Visionary V2', 'Stable Diffusion XL'];
@@ -45,6 +60,29 @@ export default function GenerateImagePage() {
   const [prompt, setPrompt] = useState('');
   const [brand, setBrand] = useState(brandTones[0]);
   const [model, setModel] = useState(aiModels[0]);
+  const [referenceImages, setReferenceImages] = useState<(string | null)[]>([null, null, null, null]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+
+  const handleOpenModal = (index: number) => {
+    setActiveSlot(index);
+    setIsModalOpen(true);
+  };
+  
+  const handleSelectFromArchive = (imageUrl: string) => {
+    if (activeSlot === null) return;
+    const newImages = [...referenceImages];
+    newImages[activeSlot] = imageUrl;
+    setReferenceImages(newImages);
+    setIsModalOpen(false);
+    setActiveSlot(null);
+  }
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...referenceImages];
+    newImages[index] = null;
+    setReferenceImages(newImages);
+  }
 
   const handleGenerate = async () => {
     if (!prompt) {
@@ -76,6 +114,8 @@ export default function GenerateImagePage() {
       setIsGenerating(false);
     }
   };
+
+  const archiveImages = PlaceHolderImages.slice(0, 10);
 
   return (
     <>
@@ -123,6 +163,40 @@ export default function GenerateImagePage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-4">
+                <Label>Reference Images (optional)</Label>
+                <div className="grid grid-cols-4 gap-4">
+                  {referenceImages.map((imgUrl, index) => (
+                    <div key={index} className="relative">
+                      <button
+                        onClick={() => handleOpenModal(index)}
+                        className={cn(
+                          'aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center transition-colors hover:border-primary hover:bg-primary/5',
+                          imgUrl ? 'border-primary' : 'border-muted'
+                        )}
+                      >
+                        {imgUrl ? (
+                          <Image src={imgUrl} alt={`Reference ${index + 1}`} fill className="object-cover rounded-md" />
+                        ) : (
+                          <Plus className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </button>
+                      {imgUrl && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="ai-model">AI Model</Label>
@@ -199,6 +273,42 @@ export default function GenerateImagePage() {
           </Card>
         </div>
       </main>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Select an Image</DialogTitle>
+            <DialogDescription>
+              Upload a new image or choose one from your existing archive.
+            </DialogDescription>
+          </DialogHeader>
+          <Tabs defaultValue="archive" className="w-full">
+            <TabsList>
+              <TabsTrigger value="archive">Image Archive</TabsTrigger>
+              <TabsTrigger value="upload">Upload New</TabsTrigger>
+            </TabsList>
+            <TabsContent value="archive" className="mt-4">
+                <div className="grid grid-cols-5 gap-4 max-h-[50vh] overflow-y-auto p-1">
+                    {archiveImages.map((image) => (
+                        <button 
+                            key={image.id}
+                            className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all group"
+                            onClick={() => handleSelectFromArchive(image.imageUrl)}
+                         >
+                            <Image src={image.imageUrl} alt={image.description} fill className="object-cover" data-ai-hint={image.imageHint} />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <span className="text-white text-sm font-semibold">Select</span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </TabsContent>
+            <TabsContent value="upload" className="mt-4">
+                <ImageUploader />
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
