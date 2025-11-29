@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,7 +21,7 @@ const HeadlineCard = ({ headline }: { headline: Headline }) => (
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow" />
-      <CardFooter className="grid grid-cols-2 gap-2">
+      <CardFooter className="flex flex-col gap-2 items-stretch">
         <Button asChild>
             <Link href={`/studio/${headline.slug}`}>
                 <Sparkles /> Generate Content
@@ -42,7 +43,7 @@ const LoadingSkeleton = () => (
         <Skeleton className="h-4 w-1/2 mt-2" />
       </CardHeader>
       <CardContent className="h-10" />
-      <CardFooter className="grid grid-cols-2 gap-2">
+      <CardFooter className="flex flex-col gap-2 items-stretch">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
       </CardFooter>
