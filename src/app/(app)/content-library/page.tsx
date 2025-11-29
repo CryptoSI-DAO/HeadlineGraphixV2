@@ -127,12 +127,7 @@ export default function ContentLibraryPage() {
                             <TableRow key={`empty-${index}`}>
                                 <TableCell className="font-medium text-muted-foreground">#{index + 1}</TableCell>
                                 <TableCell colSpan={4} className="text-muted-foreground italic">Empty Slot</TableCell>
-                                <TableCell className="text-right">
-                                     <Button variant="ghost" size="sm" disabled>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Add
-                                    </Button>
-                                </TableCell>
+                                <TableCell className="text-right"></TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
