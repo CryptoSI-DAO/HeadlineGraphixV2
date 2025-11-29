@@ -201,7 +201,6 @@ export default function GenerateContentPage() {
                         <TabsList>
                             <TabsTrigger value="draft">Draft</TabsTrigger>
                             <TabsTrigger value="preview">Preview</TabsTrigger>
-                            <TabsTrigger value="images">Images</TabsTrigger>
                         </TabsList>
                     </div>
                     <TabsContent value="draft" className="p-6">
@@ -217,9 +216,6 @@ export default function GenerateContentPage() {
                                 {drafts.blogPost}
                             </ReactMarkdown>
                         </div>
-                    </TabsContent>
-                    <TabsContent value="images" className="p-6">
-                      <ImageUploader />
                     </TabsContent>
                   </Tabs>
                 ) : (
