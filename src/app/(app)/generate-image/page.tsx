@@ -55,6 +55,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const brandTones = ['Momentum Inc.'];
@@ -147,114 +148,116 @@ export default function GenerateImagePage() {
         </p>
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Panel: Configuration */}
-          <Card>
+          <Card className="max-h-[calc(100vh-10rem)] flex flex-col">
             <CardHeader>
               <CardTitle>1. Configure Infographic</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="headline">Enter Headline <span className="text-destructive">*</span></Label>
-                    <Input id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g., The Future of Renewable Energy" />
-                </div>
-                
-                <div className="space-y-2">
-                    <Label htmlFor="content">Content</Label>
-                    <Textarea
-                      id="content"
-                      placeholder="Add key points or information you want to highlight in your infographic..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                </div>
+            <ScrollArea className="flex-grow">
+              <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                      <Label htmlFor="headline">Enter Headline <span className="text-destructive">*</span></Label>
+                      <Input id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g., The Future of Renewable Energy" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                      <Label htmlFor="content">Content</Label>
+                      <Textarea
+                        id="content"
+                        placeholder="Add key points or information you want to highlight in your infographic..."
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                  </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="watermark">Watermark</Label>
-                    <Input id="watermark" value={watermark} onChange={(e) => setWatermark(e.target.value)} placeholder="This will appear as a subtle watermark" />
-                </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="watermark">Watermark</Label>
+                      <Input id="watermark" value={watermark} onChange={(e) => setWatermark(e.target.value)} placeholder="This will appear as a subtle watermark" />
+                  </div>
 
-                <div className="space-y-3">
-                    <Label>Image Size</Label>
-                    <RadioGroup value={imageSize} onValueChange={setImageSize} className="grid grid-cols-3 gap-4">
-                        {[
-                            {id: 'square', icon: SquareIcon, label: 'Square', dims: '1024x1024', desc: 'Best for FB, IG, LinkedIn'},
-                            {id: 'landscape', icon: RectangleHorizontal, label: 'Landscape', dims: '1536x1024', desc: 'Best for Twitter, Banners'},
-                            {id: 'portrait', icon: RectangleVertical, label: 'Portrait', dims: '1024x1536', desc: 'Best for Pinterest, Stories'},
-                        ].map(size => (
-                            <Label key={size.id} htmlFor={`size-${size.id}`} className={cn("rounded-lg border-2 p-3 flex flex-col items-center justify-center cursor-pointer transition-colors", imageSize === size.id ? 'border-primary ring-2 ring-primary' : 'border-muted hover:border-primary/50')}>
-                                <RadioGroupItem value={size.id} id={`size-${size.id}`} className="sr-only" />
-                                <size.icon className="w-8 h-8 mb-2" />
-                                <span className="font-semibold">{size.label}</span>
-                                <span className="text-xs text-muted-foreground">{size.dims}</span>
-                                <span className="text-xs text-center text-muted-foreground/80 mt-1">{size.desc}</span>
-                            </Label>
-                        ))}
-                    </RadioGroup>
-                </div>
-                
-                <Tabs defaultValue="preset">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="preset">Use Saved Preset</TabsTrigger>
-                        <TabsTrigger value="custom">Custom Branding</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="preset" className="pt-4">
-                        <Select value={brand} onValueChange={setBrand}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a brand preset" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {brandTones.map((tone) => (
-                                <SelectItem key={tone} value={tone}>
-                                    {tone}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </TabsContent>
-                    <TabsContent value="custom" className="space-y-4 pt-4">
-                       <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="primary-color" className="flex items-center gap-2"><Palette size={16}/> Primary Color</Label>
-                                <Input id="primary-color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="font" className="flex items-center gap-2"><Type size={16}/> Font</Label>
-                                <Select value={font} onValueChange={setFont}>
-                                    <SelectTrigger id="font"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Inter">Inter</SelectItem>
-                                        <SelectItem value="Roboto">Roboto</SelectItem>
-                                        <SelectItem value="Open Sans">Open Sans</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                       </div>
-                       <div className="space-y-2">
-                            <Label htmlFor="art-style" className="flex items-center gap-2"><Brush size={16}/> Art Style</Label>
-                            <Select value={artStyle} onValueChange={setArtStyle}>
-                                <SelectTrigger id="art-style"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Minimalist">Minimalist</SelectItem>
-                                    <SelectItem value="Corporate">Corporate</SelectItem>
-                                    <SelectItem value="Playful">Playful</SelectItem>
-                                    <SelectItem value="Geometric">Geometric</SelectItem>
-                                </SelectContent>
-                            </Select>
-                       </div>
-                    </TabsContent>
-                </Tabs>
-
-
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating...' : 'Generate Infographic'}
-                <Sparkles className="ml-2 h-5 w-5" />
-              </Button>
-            </CardContent>
+                  <div className="space-y-3">
+                      <Label>Image Size</Label>
+                      <RadioGroup value={imageSize} onValueChange={setImageSize} className="grid grid-cols-3 gap-4">
+                          {[
+                              {id: 'square', icon: SquareIcon, label: 'Square', dims: '1024x1024', desc: 'Best for FB, IG, LinkedIn'},
+                              {id: 'landscape', icon: RectangleHorizontal, label: 'Landscape', dims: '1536x1024', desc: 'Best for Twitter, Banners'},
+                              {id: 'portrait', icon: RectangleVertical, label: 'Portrait', dims: '1024x1536', desc: 'Best for Pinterest, Stories'},
+                          ].map(size => (
+                              <Label key={size.id} htmlFor={`size-${size.id}`} className={cn("rounded-lg border-2 p-3 flex flex-col items-center justify-center cursor-pointer transition-colors", imageSize === size.id ? 'border-primary ring-2 ring-primary' : 'border-muted hover:border-primary/50')}>
+                                  <RadioGroupItem value={size.id} id={`size-${size.id}`} className="sr-only" />
+                                  <size.icon className="w-8 h-8 mb-2" />
+                                  <span className="font-semibold">{size.label}</span>
+                                  <span className="text-xs text-muted-foreground">{size.dims}</span>
+                                  <span className="text-xs text-center text-muted-foreground/80 mt-1">{size.desc}</span>
+                              </Label>
+                          ))}
+                      </RadioGroup>
+                  </div>
+                  
+                  <Tabs defaultValue="preset">
+                      <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="preset">Use Saved Preset</TabsTrigger>
+                          <TabsTrigger value="custom">Custom Branding</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="preset" className="pt-4">
+                          <Select value={brand} onValueChange={setBrand}>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select a brand preset" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {brandTones.map((tone) => (
+                                  <SelectItem key={tone} value={tone}>
+                                      {tone}
+                                  </SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </TabsContent>
+                      <TabsContent value="custom" className="space-y-4 pt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="primary-color" className="flex items-center gap-2"><Palette size={16}/> Primary Color</Label>
+                                  <Input id="primary-color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="font" className="flex items-center gap-2"><Type size={16}/> Font</Label>
+                                  <Select value={font} onValueChange={setFont}>
+                                      <SelectTrigger id="font"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                          <SelectItem value="Inter">Inter</SelectItem>
+                                          <SelectItem value="Roboto">Roboto</SelectItem>
+                                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                        </div>
+                        <div className="space-y-2">
+                              <Label htmlFor="art-style" className="flex items-center gap-2"><Brush size={16}/> Art Style</Label>
+                              <Select value={artStyle} onValueChange={setArtStyle}>
+                                  <SelectTrigger id="art-style"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="Minimalist">Minimalist</SelectItem>
+                                      <SelectItem value="Corporate">Corporate</SelectItem>
+                                      <SelectItem value="Playful">Playful</SelectItem>
+                                      <SelectItem value="Geometric">Geometric</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                        </div>
+                      </TabsContent>
+                  </Tabs>
+              </CardContent>
+              </ScrollArea>
+              <div className="p-6 pt-0">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Generating...' : 'Generate Infographic'}
+                  <Sparkles className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
           </Card>
 
           {/* Right Panel: Results */}
@@ -343,5 +346,3 @@ export default function GenerateImagePage() {
     </>
   );
 }
-
-    
