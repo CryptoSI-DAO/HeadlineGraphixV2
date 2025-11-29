@@ -80,7 +80,7 @@ export default function ContentLibraryPage() {
                         <TableRow>
                         <TableHead className="w-[80px]">Slot</TableHead>
                         <TableHead>Headline</TableHead>
-                        <TableHead>Tone</TableHead>
+                        <TableHead>Brand</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
