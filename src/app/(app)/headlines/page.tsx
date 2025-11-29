@@ -45,11 +45,13 @@ const LoadingSkeleton = () => (
 
 export default function HeadlinesPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [headlines, setHeadlines] = useState<Headline[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      setHeadlines(MOCK_HEADLINES.slice(0, 10));
       setIsLoading(false);
-    }, 2000); // Simulate 2-second loading time
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -57,15 +59,11 @@ export default function HeadlinesPage() {
     <>
       <Header title="Latest Headlines" />
       <main className="flex-1 p-4 md:p-6">
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {isLoading ? (
-            <>
-              <LoadingSkeleton />
-              <LoadingSkeleton />
-              <LoadingSkeleton />
-            </>
+            Array.from({ length: 8 }).map((_, index) => <LoadingSkeleton key={index} />)
           ) : (
-            MOCK_HEADLINES.map(headline => (
+            headlines.map(headline => (
               <HeadlineCard key={headline.id} headline={headline} />
             ))
           )}

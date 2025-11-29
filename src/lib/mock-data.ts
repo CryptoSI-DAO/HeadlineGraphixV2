@@ -1,3 +1,4 @@
+
 import type { Headline, GeneratedContent } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -22,6 +23,55 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'The Future of Work: Boosting Productivity in Remote Teams',
     source: 'Harvard Business Review',
     date: '2024-07-18',
+  },
+  {
+    id: '4',
+    slug: 'sustainable-investing-growth',
+    title: 'Sustainable Investing: A New Era of Financial Growth',
+    source: 'Financial Times',
+    date: '2024-07-17',
+  },
+  {
+    id: '5',
+    slug: '5g-revolution',
+    title: 'The 5G Revolution: How It Will Change Your Life',
+    source: 'Wired',
+    date: '2024-07-16',
+  },
+  {
+    id: '6',
+    slug: 'space-tourism-takes-off',
+    title: 'Space Tourism: The Final Frontier for Luxury Travel?',
+    source: 'Bloomberg',
+    date: '2024-07-15',
+  },
+  {
+    id: '7',
+    slug: 'data-privacy-concerns',
+    title: 'Data Privacy in the Digital Age: Are We Losing Control?',
+    source: 'The Verge',
+    date: '2024-07-14',
+  },
+  {
+    id: '8',
+    slug: 'ecommerce-personalization',
+    title: 'The Power of Personalization in E-commerce',
+    source: 'Shopify Blog',
+    date: '2024-07-13',
+  },
+  {
+    id: '9',
+    slug: 'mental-health-in-workplace',
+    title: 'Prioritizing Mental Health in the Modern Workplace',
+    source: 'Forbes',
+    date: '2024-07-12',
+  },
+  {
+    id: '10',
+    slug: 'rise-of-creator-economy',
+    title: 'The Creator Economy: How Influencers Are Building Empires',
+    source: 'The New York Times',
+    date: '2024-07-11',
   },
 ];
 
