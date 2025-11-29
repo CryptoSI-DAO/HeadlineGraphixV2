@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -31,6 +32,12 @@ import {
   FileText,
   Plus,
   X,
+  Palette,
+  Type,
+  Brush,
+  RectangleHorizontal,
+  RectangleVertical,
+  Square as SquareIcon
 } from 'lucide-react';
 import { generateImage } from '@/ai/flows/generate-image';
 import type { GenerateImageOutput } from '@/ai/flows/generate-image';
@@ -46,10 +53,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageUploader } from '@/components/ImageUploader';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const brandTones = ['Momentum Inc.'];
-const aiModels = ['Visionary V3 (Recommended)', 'Visionary V2', 'Stable Diffusion XL'];
 
 export default function GenerateImagePage() {
   const { toast } = useToast();
@@ -59,10 +67,18 @@ export default function GenerateImagePage() {
 
   const [prompt, setPrompt] = useState('');
   const [brand, setBrand] = useState(brandTones[0]);
-  const [model, setModel] = useState(aiModels[0]);
   const [referenceImages, setReferenceImages] = useState<(string | null)[]>([null, null, null, null]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
+
+  const [headline, setHeadline] = useState('');
+  const [content, setContent] = useState('');
+  const [watermark, setWatermark] = useState('');
+  const [imageSize, setImageSize] = useState('square');
+  const [primaryColor, setPrimaryColor] = useState('#3B82F6');
+  const [font, setFont] = useState('Inter');
+  const [artStyle, setArtStyle] = useState('Minimalist');
+
 
   const handleOpenModal = (index: number) => {
     setActiveSlot(index);
@@ -85,11 +101,11 @@ export default function GenerateImagePage() {
   }
 
   const handleGenerate = async () => {
-    if (!prompt) {
+    if (!headline) {
       toast({
         variant: 'destructive',
-        title: 'Prompt is required',
-        description: 'Please enter a headline or story to generate an image.',
+        title: 'Headline is required',
+        description: 'Please enter a headline to generate an image.',
       });
       return;
     }
@@ -97,7 +113,12 @@ export default function GenerateImagePage() {
     setGeneratedImage(null);
 
     try {
-      const result = await generateImage({ prompt, brand });
+      // The generateImage flow currently only takes prompt and brand.
+      // We can extend it to take more parameters in the future.
+      const result = await generateImage({ 
+        prompt: `${headline}\n\n${content}`, 
+        brand 
+      });
       setGeneratedImage(result);
       toast({
         title: 'Image Generated',
@@ -119,108 +140,118 @@ export default function GenerateImagePage() {
 
   return (
     <>
-      <Header title="Image Generation" />
+      <Header title="Infographic Generation" />
       <main className="flex-1 p-4 md:p-6">
         <p className="text-muted-foreground mb-8 max-w-2xl">
-          Provide a story or draft, select a model, and generate a unique visual asset.
+          Provide the content and branding for your infographic, and let our AI create a unique visual asset for you.
         </p>
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Panel: Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>1. Configure Image</CardTitle>
+              <CardTitle>1. Configure Infographic</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="headline-story">Import Headline & Full Story</Label>
-                  <Button variant="link" size="sm" className="text-primary">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Select a Saved Draft
-                  </Button>
+                <div className="space-y-2">
+                    <Label htmlFor="headline">Enter Headline <span className="text-destructive">*</span></Label>
+                    <Input id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g., The Future of Renewable Energy" />
                 </div>
-                <Textarea
-                  id="headline-story"
-                  placeholder="Paste your headline and full story here..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="min-h-[150px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="brand">Brand</Label>
-                <Select value={brand} onValueChange={setBrand}>
-                  <SelectTrigger id="brand">
-                    <SelectValue placeholder="Select a brand" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brandTones.map((tone) => (
-                      <SelectItem key={tone} value={tone}>
-                        {tone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <Label>Reference Images (optional)</Label>
-                <div className="grid grid-cols-4 gap-4">
-                  {referenceImages.map((imgUrl, index) => (
-                    <div key={index} className="relative">
-                      <button
-                        onClick={() => handleOpenModal(index)}
-                        className={cn(
-                          'aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center transition-colors hover:border-primary hover:bg-primary/5',
-                          imgUrl ? 'border-primary' : 'border-muted'
-                        )}
-                      >
-                        {imgUrl ? (
-                          <Image src={imgUrl} alt={`Reference ${index + 1}`} fill className="object-cover rounded-md" />
-                        ) : (
-                          <Plus className="h-6 w-6 text-muted-foreground" />
-                        )}
-                      </button>
-                      {imgUrl && (
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                          onClick={() => handleRemoveImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                
+                <div className="space-y-2">
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      placeholder="Add key points or information you want to highlight in your infographic..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="min-h-[100px]"
+                    />
                 </div>
-              </div>
 
+                <div className="space-y-2">
+                    <Label htmlFor="watermark">Watermark</Label>
+                    <Input id="watermark" value={watermark} onChange={(e) => setWatermark(e.target.value)} placeholder="This will appear as a subtle watermark" />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ai-model">AI Model</Label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger id="ai-model">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aiModels.map((modelName) => (
-                      <SelectItem key={modelName} value={modelName}>
-                        {modelName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-3">
+                    <Label>Image Size</Label>
+                    <RadioGroup value={imageSize} onValueChange={setImageSize} className="grid grid-cols-3 gap-4">
+                        {[
+                            {id: 'square', icon: SquareIcon, label: 'Square', dims: '1024x1024', desc: 'Best for FB, IG, LinkedIn'},
+                            {id: 'landscape', icon: RectangleHorizontal, label: 'Landscape', dims: '1536x1024', desc: 'Best for Twitter, Banners'},
+                            {id: 'portrait', icon: RectangleVertical, label: 'Portrait', dims: '1024x1536', desc: 'Best for Pinterest, Stories'},
+                        ].map(size => (
+                            <Label key={size.id} htmlFor={`size-${size.id}`} className={cn("rounded-lg border-2 p-3 flex flex-col items-center justify-center cursor-pointer transition-colors", imageSize === size.id ? 'border-primary ring-2 ring-primary' : 'border-muted hover:border-primary/50')}>
+                                <RadioGroupItem value={size.id} id={`size-${size.id}`} className="sr-only" />
+                                <size.icon className="w-8 h-8 mb-2" />
+                                <span className="font-semibold">{size.label}</span>
+                                <span className="text-xs text-muted-foreground">{size.dims}</span>
+                                <span className="text-xs text-center text-muted-foreground/80 mt-1">{size.desc}</span>
+                            </Label>
+                        ))}
+                    </RadioGroup>
+                </div>
+                
+                <Tabs defaultValue="preset">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="preset">Use Saved Preset</TabsTrigger>
+                        <TabsTrigger value="custom">Custom Branding</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="preset" className="pt-4">
+                        <Select value={brand} onValueChange={setBrand}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a brand preset" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {brandTones.map((tone) => (
+                                <SelectItem key={tone} value={tone}>
+                                    {tone}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </TabsContent>
+                    <TabsContent value="custom" className="space-y-4 pt-4">
+                       <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="primary-color" className="flex items-center gap-2"><Palette size={16}/> Primary Color</Label>
+                                <Input id="primary-color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="font" className="flex items-center gap-2"><Type size={16}/> Font</Label>
+                                <Select value={font} onValueChange={setFont}>
+                                    <SelectTrigger id="font"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Inter">Inter</SelectItem>
+                                        <SelectItem value="Roboto">Roboto</SelectItem>
+                                        <SelectItem value="Open Sans">Open Sans</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                       </div>
+                       <div className="space-y-2">
+                            <Label htmlFor="art-style" className="flex items-center gap-2"><Brush size={16}/> Art Style</Label>
+                            <Select value={artStyle} onValueChange={setArtStyle}>
+                                <SelectTrigger id="art-style"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Minimalist">Minimalist</SelectItem>
+                                    <SelectItem value="Corporate">Corporate</SelectItem>
+                                    <SelectItem value="Playful">Playful</SelectItem>
+                                    <SelectItem value="Geometric">Geometric</SelectItem>
+                                </SelectContent>
+                            </Select>
+                       </div>
+                    </TabsContent>
+                </Tabs>
+
 
               <Button
                 size="lg"
-                className="w-full bg-cyan-400 hover:bg-cyan-500 text-slate-900"
+                className="w-full"
                 onClick={handleGenerate}
                 disabled={isGenerating}
               >
-                {isGenerating ? 'Generating...' : 'Generate Image'}
+                {isGenerating ? 'Generating...' : 'Generate Infographic'}
                 <Sparkles className="ml-2 h-5 w-5" />
               </Button>
             </CardContent>
@@ -235,7 +266,7 @@ export default function GenerateImagePage() {
                         <Button variant="ghost" size="icon">
                             <Pencil className="h-5 w-5" />
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={handleGenerate} disabled={isGenerating}>
                             <RefreshCw className="h-5 w-5" />
                         </Button>
                         <Button variant="ghost" size="icon">
@@ -244,7 +275,7 @@ export default function GenerateImagePage() {
                     </div>
                 )}
             </CardHeader>
-            <CardContent className="min-h-[400px] flex items-center justify-center">
+            <CardContent className="min-h-[400px] flex items-center justify-center p-6">
               {isGenerating ? (
                 <div className="w-full aspect-square max-w-sm">
                   <Skeleton className="h-full w-full rounded-lg" />
@@ -260,12 +291,12 @@ export default function GenerateImagePage() {
                 </div>
               ) : (
                 <div className="text-center text-muted-foreground p-8 flex flex-col items-center justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cyan-400/10 mb-4">
-                    <ImageIcon className="h-8 w-8 text-cyan-500" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+                    <ImageIcon className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-1 text-foreground">Your generated image will appear here</h3>
+                  <h3 className="text-lg font-semibold mb-1 text-foreground">Your infographic will appear here</h3>
                   <p className="max-w-xs mx-auto text-sm">
-                    Configure your inputs and click 'Generate Image' to begin.
+                    Configure your inputs and click 'Generate Infographic' to begin.
                   </p>
                 </div>
               )}
@@ -312,3 +343,5 @@ export default function GenerateImagePage() {
     </>
   );
 }
+
+    
