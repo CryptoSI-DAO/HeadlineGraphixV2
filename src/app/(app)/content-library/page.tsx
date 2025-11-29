@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,13 +21,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
 import type { GeneratedContent } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Trash2, Eye, FileText, Plus } from 'lucide-react';
+import { Download, Trash2, Eye, FileText, Plus, Library } from 'lucide-react';
 
 const TOTAL_SLOTS = 10;
 
@@ -58,46 +67,67 @@ export default function ContentLibraryPage() {
     <>
       <Header title="Content Library" />
       <main className="flex-1 p-4 md:p-6">
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {slots.map((item, index) => item ? (
-                <Card key={item.id} className="flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="truncate">{item.headline}</CardTitle>
-                        <CardDescription>
-                            {item.date.toLocaleDateString()}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-2">
-                        <div>
-                            <Badge variant="secondary">{item.config.brandTone}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <FileText size={16}/>
-                            <span>{item.type}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" onClick={() => handleViewClick(item)}>
-                            <Eye className="h-4 w-4" />
-                        </Button>
-                         <Button variant="outline" size="icon">
-                            <Download className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="icon" onClick={() => handleDeleteClick(item)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </CardFooter>
-                </Card>
-            ) : (
-                <Card key={`empty-${index}`} className="flex items-center justify-center border-2 border-dashed bg-muted/50">
-                    <div className="text-center text-muted-foreground">
-                        <Plus className="mx-auto h-8 w-8 mb-2" />
-                        <p className="font-semibold">Slot #{index + 1}</p>
-                        <p className="text-sm">Empty</p>
-                    </div>
-                </Card>
-            ))}
-        </div>
+        <Card>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead className="w-[80px]">Slot</TableHead>
+                        <TableHead>Headline</TableHead>
+                        <TableHead>Tone</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {slots.map((item, index) => item ? (
+                            <TableRow key={item.id}>
+                                <TableCell className="font-medium">#{index + 1}</TableCell>
+                                <TableCell className="font-semibold">{item.headline}</TableCell>
+                                <TableCell><Badge variant="secondary">{item.config.brandTone}</Badge></TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <FileText size={16}/>
+                                        <span>{item.type}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{item.date.toLocaleDateString()}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="icon" onClick={() => handleViewClick(item)} className="mr-2">
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="outline" size="icon" className="mr-2">
+                                        <Download className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="destructive" size="icon" onClick={() => handleDeleteClick(item)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            <TableRow key={`empty-${index}`}>
+                                <TableCell className="font-medium text-muted-foreground">#{index + 1}</TableCell>
+                                <TableCell colSpan={4} className="text-muted-foreground italic">Empty Slot</TableCell>
+                                <TableCell className="text-right">
+                                     <Button variant="ghost" size="sm" disabled>
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Add
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                 {history.length === 0 && (
+                    <div className="text-center text-muted-foreground p-12 h-full flex flex-col items-center justify-center">
+                        <Library className="h-10 w-10 mb-4 text-primary" />
+                        <h3 className="text-lg font-semibold mb-1">Your Library is Empty</h3>
+                        <p className="max-w-xs mx-auto">Generated content will appear here once you save it.</p>
+                  </div>
+                )}
+            </CardContent>
+        </Card>
       </main>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
