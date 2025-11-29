@@ -26,6 +26,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { MOCK_DRAFTS } from '@/lib/mock-data';
@@ -34,6 +41,7 @@ import {
   CheckCircle,
   Clipboard,
   Pencil,
+  PlusSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -52,6 +60,7 @@ export default function GenerateContentPage() {
   const [userAngle, setUserAngle] = useState('');
   const [includeBacklinks, setIncludeBacklinks] = useState(true);
   const [activeTab, setActiveTab] = useState('draft');
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -71,7 +80,7 @@ export default function GenerateContentPage() {
     }, 2000);
   };
 
-  const handleSave = () => {
+  const handleSave = (slot: number) => {
     if (!drafts) return;
     addHistoryItem({
       headline: 'AI-Powered Content Generation',
@@ -80,9 +89,10 @@ export default function GenerateContentPage() {
     });
     toast({
       title: 'Saved to Content Library',
-      description: 'Your content pack has been successfully saved.',
+      description: `Your content pack has been successfully saved to slot #${slot}.`,
       action: <CheckCircle />,
     });
+    setIsSaveModalOpen(false);
   };
 
   const handleCopy = () => {
@@ -243,13 +253,35 @@ export default function GenerateContentPage() {
               </CardContent>
             </Card>
             {drafts && (
-              <Button onClick={handleSave} size="lg" className="w-full">
+              <Button onClick={() => setIsSaveModalOpen(true)} size="lg" className="w-full">
                 <CheckCircle /> Save to Library
               </Button>
             )}
           </div>
         </div>
       </main>
+
+      <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Choose a Save Slot</DialogTitle>
+            <DialogDescription>Select one of your 10 available slots to save this content pack.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-5 gap-4 py-4">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="aspect-square h-auto w-full flex flex-col gap-2"
+                onClick={() => handleSave(index + 1)}
+              >
+                <PlusSquare className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm font-semibold">Slot #{index + 1}</span>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
