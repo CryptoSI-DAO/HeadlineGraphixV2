@@ -32,6 +32,8 @@ import { MOCK_DRAFTS } from '@/lib/mock-data';
 import {
   Sparkles,
   CheckCircle,
+  Clipboard,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -50,6 +52,7 @@ export default function GenerateContentPage() {
   const [selectedImage, setSelectedImage] = useState(PlaceHolderImages[0].imageUrl);
   const [userAngle, setUserAngle] = useState('');
   const [includeBacklinks, setIncludeBacklinks] = useState(true);
+  const [activeTab, setActiveTab] = useState('draft');
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -82,6 +85,15 @@ export default function GenerateContentPage() {
       action: <CheckCircle />,
     });
   };
+
+  const handleCopy = () => {
+    if (!drafts) return;
+    navigator.clipboard.writeText(drafts.blogPost);
+    toast({
+        title: 'Copied to Clipboard',
+        description: 'The blog post content has been copied.',
+    });
+  }
 
   const referenceImages = PlaceHolderImages.slice(0, 3);
 
@@ -196,12 +208,22 @@ export default function GenerateContentPage() {
                     <Skeleton className="h-4 w-1/2 mt-4" />
                   </div>
                 ) : drafts ? (
-                  <Tabs defaultValue="draft" className="w-full">
-                    <div className="flex items-center px-4 pt-4 border-b">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <div className="flex items-center justify-between px-4 pt-4 border-b">
                         <TabsList>
                             <TabsTrigger value="draft">Draft</TabsTrigger>
                             <TabsTrigger value="preview">Preview</TabsTrigger>
                         </TabsList>
+                        <div className="flex items-center gap-2">
+                            {activeTab === 'preview' && (
+                                <Button variant="outline" size="sm" onClick={() => setActiveTab('draft')}>
+                                    <Pencil /> Edit
+                                </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={handleCopy}>
+                                <Clipboard /> Copy
+                            </Button>
+                        </div>
                     </div>
                     <TabsContent value="draft" className="p-6">
                         <Textarea 
