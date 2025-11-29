@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +13,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Image from 'next/image';
 
 type BrandPreset = {
@@ -71,8 +90,160 @@ const ColorSwatch = ({ color }: { color: string }) => (
   </div>
 );
 
+const EditBrandModal = ({
+  preset,
+  onClose,
+  onSave,
+}: {
+  preset: BrandPreset | null;
+  onClose: () => void;
+  onSave: (updatedPreset: BrandPreset) => void;
+}) => {
+  const [editedPreset, setEditedPreset] = useState<BrandPreset | null>(preset);
+
+  if (!editedPreset) return null;
+
+  const handleInputChange = (field: keyof BrandPreset, value: string) => {
+    setEditedPreset({ ...editedPreset, [field]: value });
+  };
+  
+  const handleSaveChanges = () => {
+    onSave(editedPreset);
+  };
+
+  const isArtStyleOther = !['Geometric', 'Cartoon', 'Minimalist'].includes(editedPreset.artStyle);
+
+  return (
+    <Dialog open={!!preset} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Brand</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="brand-name" className="text-right">
+              Brand Name
+            </Label>
+            <Input
+              id="brand-name"
+              value={editedPreset.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Primary Color</Label>
+            <div className="col-span-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.primaryColor }} />
+                <Input
+                    value={editedPreset.primaryColor}
+                    onChange={(e) => handleInputChange('primaryColor', e.target.value)}
+                />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Secondary Color</Label>
+            <div className="col-span-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.secondaryColor }} />
+                <Input
+                    value={editedPreset.secondaryColor}
+                    onChange={(e) => handleInputChange('secondaryColor', e.target.value)}
+                />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Trim Color</Label>
+            <div className="col-span-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: editedPreset.trimColor }} />
+                <Input
+                    value={editedPreset.trimColor}
+                    onChange={(e) => handleInputChange('trimColor', e.target.value)}
+                />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="font-family" className="text-right">
+              Font Family
+            </Label>
+            <Input
+              id="font-family"
+              value={editedPreset.font}
+              onChange={(e) => handleInputChange('font', e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="art-style" className="text-right">
+              Art Style
+            </Label>
+            <div className="col-span-3 space-y-2">
+                <Select 
+                    value={isArtStyleOther ? "Other" : editedPreset.artStyle} 
+                    onValueChange={(value) => {
+                        if (value !== 'Other') {
+                            handleInputChange('artStyle', value);
+                        } else {
+                            handleInputChange('artStyle', '');
+                        }
+                    }}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select art style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Geometric">Geometric</SelectItem>
+                        <SelectItem value="Cartoon">Cartoon</SelectItem>
+                        <SelectItem value="Minimalist">Minimalist</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                </Select>
+                {isArtStyleOther && (
+                     <Input
+                        value={editedPreset.artStyle}
+                        onChange={(e) => handleInputChange('artStyle', e.target.value)}
+                        placeholder="Afro-Futuristic Minimalism"
+                    />
+                )}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="logo-upload" className="text-right">
+              Logo Upload
+            </Label>
+            <Input id="logo-upload" type="file" className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button type="submit" onClick={handleSaveChanges}>Save Changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export default function BrandKitsPage() {
-  const presets = [...mockBrandPresets];
+  const [allPresets, setAllPresets] = useState(mockBrandPresets);
+  const [editingPreset, setEditingPreset] = useState<BrandPreset | null>(null);
+
+  const handleEditClick = (preset: BrandPreset) => {
+    setEditingPreset(preset);
+  };
+
+  const handleCloseModal = () => {
+    setEditingPreset(null);
+  };
+
+  const handleSavePreset = (updatedPreset: BrandPreset) => {
+    setAllPresets(allPresets.map(p => p.id === updatedPreset.id ? updatedPreset : p));
+    setEditingPreset(null);
+  }
+
+  const presets = [...allPresets];
   while (presets.length < 10) {
     presets.push({
       id: `empty-${presets.length}`,
@@ -136,7 +307,7 @@ export default function BrandKitsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => handleEditClick(preset)}>
                             Edit
                           </Button>
                           <Button variant="destructive" size="sm">
@@ -158,6 +329,13 @@ export default function BrandKitsPage() {
           </CardContent>
         </Card>
       </main>
+
+      <EditBrandModal 
+        preset={editingPreset}
+        onClose={handleCloseModal}
+        onSave={handleSavePreset}
+      />
     </>
   );
 }
+
