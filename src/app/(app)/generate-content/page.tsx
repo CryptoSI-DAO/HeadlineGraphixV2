@@ -37,7 +37,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ImageUploader } from '@/components/ImageUploader';
 
 const brandTones = ['Momentum Inc.'];
 
@@ -99,13 +98,7 @@ export default function GenerateContentPage() {
 
   return (
     <>
-      <Header title="Content Generation Studio">
-        {drafts && (
-          <Button onClick={handleSave}>
-            <CheckCircle /> Save to Library
-          </Button>
-        )}
-      </Header>
+      <Header title="Content Generation Studio" />
       <main className="flex-1 p-4 md:p-6">
         <p className="text-muted-foreground mb-8 max-w-2xl">
           Configure your inputs on the left and review the generated drafts on the right.
@@ -249,6 +242,11 @@ export default function GenerateContentPage() {
                 )}
               </CardContent>
             </Card>
+            {drafts && (
+              <Button onClick={handleSave} size="lg" className="w-full">
+                <CheckCircle /> Save to Library
+              </Button>
+            )}
           </div>
         </div>
       </main>
