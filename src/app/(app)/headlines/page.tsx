@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/Header';
 import type { Headline } from '@/lib/types';
 import { MOCK_HEADLINES } from '@/lib/mock-data';
-import { ArrowRight, Calendar, Globe } from 'lucide-react';
+import { ArrowRight, Calendar, Globe, ImageIcon, Sparkles } from 'lucide-react';
 
 const HeadlineCard = ({ headline }: { headline: Headline }) => (
     <Card className="flex flex-col">
@@ -20,10 +20,15 @@ const HeadlineCard = ({ headline }: { headline: Headline }) => (
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow" />
-      <CardFooter>
-        <Button asChild className="w-full">
+      <CardFooter className="grid grid-cols-2 gap-2">
+        <Button asChild>
             <Link href={`/studio/${headline.slug}`}>
-                Generate Content Pack <ArrowRight className="ml-2 h-4 w-4" />
+                <Sparkles /> Generate Content
+            </Link>
+        </Button>
+        <Button asChild variant="secondary">
+             <Link href="/generate-image">
+                <ImageIcon /> Generate Image
             </Link>
         </Button>
       </CardFooter>
@@ -37,7 +42,8 @@ const LoadingSkeleton = () => (
         <Skeleton className="h-4 w-1/2 mt-2" />
       </CardHeader>
       <CardContent className="h-10" />
-      <CardFooter>
+      <CardFooter className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
       </CardFooter>
     </Card>
