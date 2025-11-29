@@ -175,6 +175,37 @@ export default function GenerateImagePage() {
                         <Label htmlFor="watermark">Watermark</Label>
                         <Input id="watermark" value={watermark} onChange={(e) => setWatermark(e.target.value)} placeholder="This will appear as a subtle watermark" />
                     </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Add up to 4 reference images</Label>
+                      <div className="grid grid-cols-4 gap-4">
+                        {referenceImages.map((imageUrl, index) => (
+                          <button
+                            key={index}
+                            className="relative aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:border-primary transition-all group bg-muted/20"
+                            onClick={() => handleOpenModal(index)}
+                          >
+                            {imageUrl ? (
+                              <>
+                                <Image src={imageUrl} alt={`Reference ${index + 1}`} fill className="object-cover rounded-md" />
+                                <div 
+                                  className="absolute top-1 right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 z-10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveImage(index);
+                                  }}
+                                >
+                                  <X size={14} />
+                                </div>
+                              </>
+                            ) : (
+                              <Plus className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
 
                     <div className="space-y-3">
                         <Label>Image Size</Label>
