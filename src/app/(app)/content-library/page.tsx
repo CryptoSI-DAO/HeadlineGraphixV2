@@ -4,60 +4,100 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/Header';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
   } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
 import type { GeneratedContent } from '@/lib/types';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download, Trash2, Eye, FileText, Plus } from 'lucide-react';
+
+const TOTAL_SLOTS = 10;
 
 export default function ContentLibraryPage() {
-  const { history } = useAppContext();
+  const { history, deleteHistoryItem } = useAppContext();
   const [selectedItem, setSelectedItem] = useState<GeneratedContent | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<GeneratedContent | null>(null);
 
-  const handleRowClick = (item: GeneratedContent) => {
+  const handleViewClick = (item: GeneratedContent) => {
     setSelectedItem(item);
   };
+
+  const handleDeleteClick = (item: GeneratedContent) => {
+    setItemToDelete(item);
+  }
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deleteHistoryItem(itemToDelete.id);
+      setItemToDelete(null);
+    }
+  }
+
+  const slots = Array.from({ length: TOTAL_SLOTS }).map((_, index) => {
+    return history[index] || null;
+  });
 
   return (
     <>
       <Header title="Content Library" />
       <main className="flex-1 p-4 md:p-6">
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Headline</TableHead>
-                <TableHead>Brand Tone</TableHead>
-                <TableHead className="text-right">Type</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map(item => (
-                <TableRow key={item.id} onClick={() => handleRowClick(item)} className="cursor-pointer">
-                  <TableCell>{item.date.toLocaleDateString()}</TableCell>
-                  <TableCell className="font-medium max-w-sm truncate">{item.headline}</TableCell>
-                  <TableCell><Badge variant="secondary">{item.config.brandTone}</Badge></TableCell>
-                  <TableCell className="text-right"><Badge>{item.type}</Badge></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {slots.map((item, index) => item ? (
+                <Card key={item.id} className="flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="truncate">{item.headline}</CardTitle>
+                        <CardDescription>
+                            {item.date.toLocaleDateString()}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow space-y-2">
+                        <div>
+                            <Badge variant="secondary">{item.config.brandTone}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <FileText size={16}/>
+                            <span>{item.type}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-end gap-2">
+                        <Button variant="outline" size="icon" onClick={() => handleViewClick(item)}>
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                         <Button variant="outline" size="icon">
+                            <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => handleDeleteClick(item)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </CardFooter>
+                </Card>
+            ) : (
+                <Card key={`empty-${index}`} className="flex items-center justify-center border-2 border-dashed bg-muted/50">
+                    <div className="text-center text-muted-foreground">
+                        <Plus className="mx-auto h-8 w-8 mb-2" />
+                        <p className="font-semibold">Slot #{index + 1}</p>
+                        <p className="text-sm">Empty</p>
+                    </div>
+                </Card>
+            ))}
+        </div>
       </main>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
@@ -90,6 +130,21 @@ export default function ContentLibraryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this content pack from your library.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

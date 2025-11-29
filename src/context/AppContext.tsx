@@ -9,6 +9,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 interface AppContextType {
   history: GeneratedContent[];
   addHistoryItem: (item: Omit<GeneratedContent, 'id' | 'date' | 'type'>) => void;
+  deleteHistoryItem: (itemId: string) => void;
   referenceImages: ImagePlaceholder[];
   addReferenceImage: (image: ImagePlaceholder) => void;
   deleteReferenceImage: (imageId: string) => void;
@@ -36,6 +37,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHistory((prev) => [newItem, ...prev]);
   };
 
+  const deleteHistoryItem = (itemId: string) => {
+    setHistory((prev) => prev.filter((item) => item.id !== itemId));
+  };
+
   const addReferenceImage = (image: ImagePlaceholder) => {
     setReferenceImages((prev) => [image, ...prev]);
   };
@@ -51,6 +56,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = {
     history,
     addHistoryItem,
+    deleteHistoryItem,
     referenceImages,
     addReferenceImage,
     deleteReferenceImage,
