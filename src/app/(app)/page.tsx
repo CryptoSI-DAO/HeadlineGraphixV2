@@ -1,6 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,10 +12,10 @@ import { useAppContext } from '@/context/AppContext';
 import { Header } from '@/components/Header';
 import { useState } from 'react';
 import type { UserPreferences } from '@/lib/types';
-import { ArrowRight, Wallet } from 'lucide-react';
+import { ArrowRight, Wallet, Archive } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { preferences, savePreferences } = useAppContext();
+  const { preferences, savePreferences, referenceImages } = useAppContext();
   const { toast } = useToast();
   const [localPreferences, setLocalPreferences] = useState<UserPreferences>(preferences);
 
@@ -38,6 +40,7 @@ export default function DashboardPage() {
     setLocalPreferences({ ...localPreferences, backlinkUrls: newBacklinks });
   };
 
+  const imagePreviews = referenceImages.slice(0, 4);
 
   return (
     <>
@@ -80,6 +83,43 @@ export default function DashboardPage() {
           <CardFooter>
             <Button onClick={handleSave}>Save Preferences</Button>
           </CardFooter>
+        </Card>
+
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Reference Image Library</CardTitle>
+                    <CardDescription>A preview of your most recent images.</CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/image-archive">View All</Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                {imagePreviews.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {imagePreviews.map((image) => (
+                            <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden border">
+                                <Image
+                                    src={image.imageUrl}
+                                    alt={image.description}
+                                    fill
+                                    className="object-cover"
+                                    data-ai-hint={image.imageHint}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
+                        <Archive className="w-10 h-10 mb-4" />
+                        <p>Your image archive is empty.</p>
+                        <Button asChild variant="link">
+                            <Link href="/image-archive">Upload your first image</Link>
+                        </Button>
+                    </div>
+                )}
+            </CardContent>
         </Card>
 
         <Card className="bg-primary text-primary-foreground">
