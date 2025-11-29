@@ -22,6 +22,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Table,
   TableBody,
   TableCell,
@@ -35,7 +41,7 @@ import { useAppContext } from '@/context/AppContext';
 import type { GeneratedContent } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Trash2, Eye, FileText, Plus, Library } from 'lucide-react';
+import { Download, Trash2, Eye, FileText, Plus, Library, MoreHorizontal } from 'lucide-react';
 
 const TOTAL_SLOTS = 10;
 
@@ -94,15 +100,27 @@ export default function ContentLibraryPage() {
                                 </TableCell>
                                 <TableCell>{item.date.toLocaleDateString()}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="icon" onClick={() => handleViewClick(item)} className="mr-2">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="outline" size="icon" className="mr-2">
-                                        <Download className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="destructive" size="icon" onClick={() => handleDeleteClick(item)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleViewClick(item)}>
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                <span>View</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem>
+                                                <Download className="mr-2 h-4 w-4" />
+                                                <span>Download</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(item)}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Delete</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ) : (
