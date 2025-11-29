@@ -11,6 +11,7 @@ interface AppContextType {
   addHistoryItem: (item: Omit<GeneratedContent, 'id' | 'date' | 'type'>) => void;
   referenceImages: ImagePlaceholder[];
   addReferenceImage: (image: ImagePlaceholder) => void;
+  deleteReferenceImage: (imageId: string) => void;
   preferences: UserPreferences;
   savePreferences: (prefs: UserPreferences) => void;
 }
@@ -39,6 +40,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setReferenceImages((prev) => [image, ...prev]);
   };
 
+  const deleteReferenceImage = (imageId: string) => {
+    setReferenceImages((prev) => prev.filter((img) => img.id !== imageId));
+  };
+
   const savePreferences = (prefs: UserPreferences) => {
     setPreferences(prefs);
   };
@@ -48,6 +53,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addHistoryItem,
     referenceImages,
     addReferenceImage,
+    deleteReferenceImage,
     preferences,
     savePreferences,
   };

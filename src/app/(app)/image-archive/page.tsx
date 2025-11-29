@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 const TOTAL_SLOTS = 10;
 
 export default function ImageArchivePage() {
-  const { referenceImages, addReferenceImage } = useAppContext();
+  const { referenceImages, addReferenceImage, deleteReferenceImage } = useAppContext();
   const [imageToDelete, setImageToDelete] = useState<ImagePlaceholder | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -51,9 +51,7 @@ export default function ImageArchivePage() {
 
   const handleConfirmDelete = () => {
     if (imageToDelete) {
-      // In a real app, you'd call a function to delete the image from the source.
-      // Here we'll just close the dialog and deselect.
-      console.log('Deleting image:', imageToDelete.id);
+      deleteReferenceImage(imageToDelete.id);
       setImageToDelete(null);
     }
   }
