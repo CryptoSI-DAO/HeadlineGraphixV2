@@ -1,15 +1,23 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
-export function ImageUploader() {
-  const [files, setFiles] = useState<{file: File, preview: string}[]>([]);
+export type UploadFile = { file: File; preview: string };
+
+type ImageUploaderProps = {
+  onFilesChange?: (files: UploadFile[]) => void;
+  resetSignal?: number;
+  disabled?: boolean;
+};
+
+export function ImageUploader({ onFilesChange, resetSignal, disabled = false }: ImageUploaderProps) {
+  const [files, setFiles] = useState<UploadFile[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map(file => ({
@@ -27,8 +35,21 @@ export function ImageUploader() {
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.png', '.gif', '.webp']
-    }
+    },
+    disabled,
   });
+
+  useEffect(() => {
+    onFilesChange?.(files);
+  }, [files, onFilesChange]);
+
+  useEffect(() => {
+    if (resetSignal === undefined) {
+      return;
+    }
+    setFiles([]);
+    onFilesChange?.([]);
+  }, [resetSignal, onFilesChange]);
 
   return (
     <div className="space-y-4">
@@ -44,7 +65,7 @@ export function ImageUploader() {
         {isDragActive ? (
           <p>Drop the files here ...</p>
         ) : (
-          <p className="text-muted-foreground">Drag 'n' drop some files here, or click to select files</p>
+          <p className="text-muted-foreground">Drag files here, or click to select files</p>
         )}
       </div>
       {files.length > 0 && (

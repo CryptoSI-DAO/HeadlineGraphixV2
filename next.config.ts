@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'supabase.cryptosi.org',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
 };

@@ -7,6 +7,7 @@ export type Headline = {
   title: string;
   source: string;
   date: string;
+  url: string;
   content?: string;
 };
 

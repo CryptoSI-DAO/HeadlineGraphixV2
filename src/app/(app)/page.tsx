@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAppContext } from '@/context/AppContext';
 import { Header } from '@/components/Header';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { UserPreferences } from '@/lib/types';
+import { useProfile } from '@/hooks/use-profile';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { useReferenceImages } from '@/hooks/use-reference-images';
 import {
   Dialog,
   DialogContent,
@@ -22,32 +24,79 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowRight, Wallet, Archive, Info, Link as LinkIcon, Users, Mail, TreeDeciduous, Book } from 'lucide-react';
 
-export default function DashboardPage() {
-  const { preferences, savePreferences, referenceImages } = useAppContext();
-  const { toast } = useToast();
-  const [localPreferences, setLocalPreferences] = useState<UserPreferences>(preferences);
+const MIN_FIELDS = 3;
 
-  const handleSave = () => {
-    savePreferences(localPreferences);
-    toast({
-      title: 'Preferences Saved',
-      description: 'Your settings have been updated successfully.',
-      variant: 'default',
-    });
+function normalizeList(values: string[], min = MIN_FIELDS) {
+  const next = [...values];
+  while (next.length < min) {
+    next.push('');
+  }
+  return next;
+}
+
+function normalizePreferences(prefs: UserPreferences): UserPreferences {
+  return {
+    focusTopics: normalizeList(prefs.focusTopics),
+    backlinkUrls: normalizeList(prefs.backlinkUrls),
+  };
+}
+
+function sanitizePreferences(prefs: UserPreferences): UserPreferences {
+  const clean = (values: string[]) => values.map((value) => value.trim()).filter((value) => value.length > 0);
+  return {
+    focusTopics: clean(prefs.focusTopics),
+    backlinkUrls: clean(prefs.backlinkUrls),
+  };
+}
+
+export default function DashboardPage() {
+  const { toast } = useToast();
+  const { displayProfile, isLoading: isProfileLoading } = useProfile();
+  const {
+    preferences,
+    isLoading: isPreferencesLoading,
+    isSaving: isSavingPreferences,
+    savePreferences: saveRemotePreferences,
+    error: preferencesError,
+  } = useUserPreferences();
+  const [localPreferences, setLocalPreferences] = useState<UserPreferences>(normalizePreferences(preferences));
+
+  useEffect(() => {
+    setLocalPreferences(normalizePreferences(preferences));
+  }, [preferences]);
+
+  const handleSave = async () => {
+    try {
+      const sanitized = sanitizePreferences(localPreferences);
+      const updated = await saveRemotePreferences(sanitized);
+      setLocalPreferences(normalizePreferences(updated));
+      toast({
+        title: 'Preferences Saved',
+        description: 'Your settings have been updated successfully.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to save preferences',
+        description: (error as Error).message ?? 'Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleTopicChange = (index: number, value: string) => {
-    const newTopics = [...localPreferences.focusTopics];
+    const newTopics = normalizeList(localPreferences.focusTopics);
     newTopics[index] = value;
     setLocalPreferences({ ...localPreferences, focusTopics: newTopics });
   };
   
   const handleBacklinkChange = (index: number, value: string) => {
-    const newBacklinks = [...localPreferences.backlinkUrls];
+    const newBacklinks = normalizeList(localPreferences.backlinkUrls);
     newBacklinks[index] = value;
     setLocalPreferences({ ...localPreferences, backlinkUrls: newBacklinks });
   };
 
+  const { images: referenceImages, isLoading: isReferenceImagesLoading } = useReferenceImages();
   const imagePreviews = referenceImages.slice(0, 4);
 
   const backlinkSuggestions = [
@@ -80,7 +129,11 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Header title="Dashboard" />
+      <Header title="Dashboard">
+        <span className="hidden text-sm text-muted-foreground md:inline">
+          {isProfileLoading ? 'Loading profile...' : `Welcome back, ${displayProfile.name}!`}
+        </span>
+      </Header>
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -104,11 +157,20 @@ export default function DashboardPage() {
             <CardDescription>Set your focus topics and desired backlinks for AI generation.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {preferencesError ? (
+              <p className="text-sm text-destructive">{preferencesError}</p>
+            ) : null}
             <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-4">
                     <Label className="font-semibold">Focus Topics</Label>
-                    {localPreferences.focusTopics.map((topic, index) => (
-                        <Input key={index} value={topic} onChange={(e) => handleTopicChange(index, e.target.value)} placeholder={`Topic #${index + 1}`} />
+                    {normalizeList(localPreferences.focusTopics).map((topic, index) => (
+                        <Input
+                          key={index}
+                          value={topic}
+                          disabled={isPreferencesLoading || isSavingPreferences}
+                          onChange={(e) => handleTopicChange(index, e.target.value)}
+                          placeholder={`Topic #${index + 1}`}
+                        />
                     ))}
                 </div>
                 <div className="space-y-4">
@@ -143,14 +205,22 @@ export default function DashboardPage() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                    {localPreferences.backlinkUrls.map((url, index) => (
-                        <Input key={index} value={url} onChange={(e) => handleBacklinkChange(index, e.target.value)} placeholder={`URL #${index + 1}`} />
+                    {normalizeList(localPreferences.backlinkUrls).map((url, index) => (
+                        <Input
+                          key={index}
+                          value={url}
+                          disabled={isPreferencesLoading || isSavingPreferences}
+                          onChange={(e) => handleBacklinkChange(index, e.target.value)}
+                          placeholder={`URL #${index + 1}`}
+                        />
                     ))}
                 </div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSave}>Save Preferences</Button>
+            <Button onClick={handleSave} disabled={isPreferencesLoading || isSavingPreferences}>
+              {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
+            </Button>
           </CardFooter>
         </Card>
 
@@ -165,7 +235,9 @@ export default function DashboardPage() {
                 </Button>
             </CardHeader>
             <CardContent>
-                {imagePreviews.length > 0 ? (
+                {isReferenceImagesLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading your reference images...</p>
+                ) : imagePreviews.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {imagePreviews.map((image) => (
                             <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden border">

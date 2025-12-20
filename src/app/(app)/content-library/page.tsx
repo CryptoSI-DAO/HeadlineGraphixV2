@@ -148,7 +148,7 @@ export default function ContentLibraryPage() {
           <DialogHeader>
             <DialogTitle>{selectedItem?.headline}</DialogTitle>
             <DialogDescription>
-              Generated on {selectedItem?.date.toLocaleString()} with a '{selectedItem?.config.brandTone}' tone.
+              Generated on {selectedItem?.date.toLocaleString()} with a &lsquo;{selectedItem?.config.brandTone}&rsquo; tone.
             </DialogDescription>
           </DialogHeader>
           {selectedItem && (

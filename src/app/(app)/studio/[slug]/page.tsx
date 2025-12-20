@@ -124,7 +124,7 @@ export default function StudioPage() {
         <Card className="h-fit sticky top-24">
           <CardHeader>
             <CardTitle>Configuration</CardTitle>
-            <CardDescription>Generate content for: "{headline.title}"</CardDescription>
+            <CardDescription>Generate content for: &ldquo;{headline.title}&rdquo;</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -195,7 +195,7 @@ export default function StudioPage() {
               </Tabs>
             ) : (
                 <div className="text-center text-muted-foreground p-12">
-                    <p>Click "Generate Drafts" to create content.</p>
+                    <p>Click &ldquo;Generate Drafts&rdquo; to create content.</p>
                 </div>
             )}
           </CardContent>

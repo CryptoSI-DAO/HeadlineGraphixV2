@@ -74,12 +74,16 @@ const generateContentDraftsFlow = ai.defineFlow(
 
     // Replace placeholder image URL with a real one
     if (!output.infographic || !output.infographic.startsWith('http')) {
-        const imageResponse = await ai.generate({
-            model: 'googleai/imagen-4.0-fast-generate-001',
-            prompt: `An infographic about: ${input.headline}. Style: Clean, modern, professional.`,
-        });
-        const media = await imageResponse.media();
-        output.infographic = media.url;
+      const imageResponse = await ai.generate({
+        model: 'googleai/imagen-4.0-fast-generate-001',
+        prompt: `An infographic about: ${input.headline}. Style: Clean, modern, professional.`,
+      });
+      const responseMedia = imageResponse.media;
+      const mediaPart = Array.isArray(responseMedia) ? responseMedia[0] : responseMedia;
+      if (!mediaPart?.url) {
+        throw new Error('Unable to generate infographic image URL.');
+      }
+      output.infographic = mediaPart.url;
     }
     
     return output;

@@ -8,7 +8,7 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-11.9.1-orange?style=flat-square&logo=firebase)](https://firebase.google.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Platform-3FCF8E?style=flat-square&logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.1-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
@@ -23,6 +23,7 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
+- [Data Model](#data-model)
 - [AI Flows](#ai-flows)
 - [Technologies](#technologies)
 - [Contributing](#contributing)
@@ -30,7 +31,7 @@
 
 ## Overview
 
-HeadlineGraphix V2 is a sophisticated AI-powered content generation platform that transforms news headlines into engaging content packs. Built with Next.js 15, TypeScript, and Firebase, it leverages Google's Genkit AI framework to generate blog posts, LinkedIn content, and custom images based on current news trends.
+HeadlineGraphix V2 is a sophisticated AI-powered content generation platform that transforms news headlines into engaging content packs. Built with Next.js 15, TypeScript, and Supabase, it leverages Google's Genkit AI framework to generate blog posts, LinkedIn content, and custom images based on current news trends.
 
 The platform provides a comprehensive suite of tools for content creators, marketers, and social media managers to quickly produce high-quality, brand-aligned content from trending news topics.
 
@@ -80,7 +81,7 @@ The main dashboard provides an overview of your content generation activity, cre
 ### Prerequisites
 - Node.js 18+ 
 - npm or yarn
-- Firebase project (for deployment)
+- Supabase project (database + storage)
 - Google AI API key (for AI features)
 
 ### Clone the Repository
@@ -103,24 +104,29 @@ cp .env.local.example .env.local
 2. Edit `.env.local` with your actual API keys:
 
 ```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_DB_PASSWORD=optional_local_db_password
 
 # Google AI Configuration (Required for AI features)
 GOOGLE_GENAI_API_KEY=your_google_ai_api_key
-
-# Firebase Admin SDK (for server-side)
-FIREBASE_ADMIN_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----\n"
-FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account@your_project.iam.gserviceaccount.com
 ```
 
 **Important**: The `GOOGLE_GENAI_API_KEY` is required for AI content generation features to work.
+
+### Environment Variables Reference
+
+The `.env.local.example` file documents every variable the app currently expects. Copy it to `.env.local` and fill in the following values:
+
+| Variable | Purpose | Example |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL exposed to the browser | `https://your-project-ref.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key used by the client SDK | `your_public_anon_key` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for server actions / MCP automations (keep secret) | `your_service_role_key` |
+| `SUPABASE_DB_PASSWORD` | Optional password for local `supabase db start` | `super-secret` |
+| `GOOGLE_GENAI_API_KEY` | Google AI Studio key required by Genkit flows | `your_google_ai_api_key_here` |
 
 ### Run the Development Server
 ```bash
@@ -131,16 +137,33 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Configuration
 
-### Firebase Setup
-1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Authentication, Firestore, and Storage
-3. Configure your web app and copy the configuration to `.env.local`
-4. Set up Firestore security rules for your application
+### Supabase Setup
+1. Create a new Supabase project at [Supabase](https://supabase.com/) and note the **Project Reference** plus API keys.
+2. In the SQL editor (or via MCP), create the tables described in the implementation plan (`profiles`, `reference_images`, `content_packs`).
+3. Create a Storage bucket (e.g., `reference-images`) and configure public/private access per your needs.
+4. Enable Row Level Security and add policies that scope data to the authenticated user (or the temporary demo user) before shipping to production.
+5. Install the Supabase CLI and configure the Supabase MCP server so automations and the Codex CLI can run migrations/queries with the service role key.
+
+### MCP Setup (Recommended)
+1. Install the latest [Supabase CLI](https://supabase.com/docs/reference/cli/installation) and run `supabase login`.
+2. Enable the `supabase` MCP server in your IDE/CLI config so Codex can reach the project (see the Supabase MCP docs for the exact config snippet).
+3. Store `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with your MCP secret manager so the automation layer never reads them from plain `.env` files.
 
 ### Google AI Setup
 1. Get an API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Add the API key to your `.env.local` file
 3. Ensure you have the necessary permissions for content generation
+
+### News Feed Setup
+The headlines page now lets you toggle between three RSS providers, all of which work without API keys or extra `.env` values:
+
+| Provider | Description |
+| --- | --- |
+| `Google News` (default) | Aggregated global coverage via the Google News RSS search endpoint |
+| `Bing News` | Microsoft Bing News RSS search feed with regional coverage |
+| `Reddit` | Topic-matching posts across Reddit communities (Atom feed) |
+
+Your selection is stored locally in the browser so the app remembers your preferred source. If you would like to add or tweak a provider, edit `src/lib/news/providers.ts` (metadata) and `src/lib/news/index.ts` (fetcher + parser) accordingly.
 
 ### Genkit Configuration
 The application uses Google's Genkit for AI flows. Configuration is handled in `src/ai/genkit.ts`.
@@ -185,11 +208,15 @@ HeadlineGraphixV2/
 │   └── types.ts             # TypeScript type definitions
 ├── docs/                    # Documentation
 ├── public/                  # Static assets
-├── apphosting.yaml         # Firebase App Hosting configuration
+├── apphosting.yaml         # Legacy Firebase Hosting config (optional)
 ├── package.json            # Dependencies and scripts
 ├── tailwind.config.ts      # Tailwind CSS configuration
 └── tsconfig.json           # TypeScript configuration
 ```
+
+## Data Model
+
+See `docs/data-model.md` for a full breakdown of the Supabase tables and JSON shapes (profiles, reference images, AI preferences, and content packs).
 
 ## AI Flows
 
@@ -225,7 +252,7 @@ Located in `src/ai/flows/summarize-headline.ts`
 - **Lucide React**: Icon library
 
 ### Backend & AI
-- **Firebase 11.9.1**: Authentication, database, and hosting
+- **Supabase**: Hosted Postgres, Authentication, and Storage
 - **Google Genkit 1.20.0**: AI framework for flows
 - **Google AI**: Text and image generation models
 

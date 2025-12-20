@@ -9,6 +9,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Tech Trends 2025: What to Expect in AI, VR, and Quantum Computing',
     source: 'TechCrunch',
     date: '2024-07-20',
+    url: 'https://example.com/articles/tech-trends-2025',
   },
   {
     id: '2',
@@ -16,6 +17,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Crypto Market Update: Bitcoin Halving Aftermath and Altcoin Season',
     source: 'CoinDesk',
     date: '2024-07-19',
+    url: 'https://example.com/articles/crypto-market-update',
   },
   {
     id: '3',
@@ -23,6 +25,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'The Future of Work: Boosting Productivity in Remote Teams',
     source: 'Harvard Business Review',
     date: '2024-07-18',
+    url: 'https://example.com/articles/remote-work-productivity',
   },
   {
     id: '4',
@@ -30,6 +33,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Sustainable Investing: A New Era of Financial Growth',
     source: 'Financial Times',
     date: '2024-07-17',
+    url: 'https://example.com/articles/sustainable-investing-growth',
   },
   {
     id: '5',
@@ -37,6 +41,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'The 5G Revolution: How It Will Change Your Life',
     source: 'Wired',
     date: '2024-07-16',
+    url: 'https://example.com/articles/5g-revolution',
   },
   {
     id: '6',
@@ -44,6 +49,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Space Tourism: The Final Frontier for Luxury Travel?',
     source: 'Bloomberg',
     date: '2024-07-15',
+    url: 'https://example.com/articles/space-tourism-takes-off',
   },
   {
     id: '7',
@@ -51,6 +57,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Data Privacy in the Digital Age: Are We Losing Control?',
     source: 'The Verge',
     date: '2024-07-14',
+    url: 'https://example.com/articles/data-privacy-concerns',
   },
   {
     id: '8',
@@ -58,6 +65,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'The Power of Personalization in E-commerce',
     source: 'Shopify Blog',
     date: '2024-07-13',
+    url: 'https://example.com/articles/ecommerce-personalization',
   },
   {
     id: '9',
@@ -65,6 +73,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'Prioritizing Mental Health in the Modern Workplace',
     source: 'Forbes',
     date: '2024-07-12',
+    url: 'https://example.com/articles/mental-health-in-workplace',
   },
   {
     id: '10',
@@ -72,6 +81,7 @@ export const MOCK_HEADLINES: Headline[] = [
     title: 'The Creator Economy: How Influencers Are Building Empires',
     source: 'The New York Times',
     date: '2024-07-11',
+    url: 'https://example.com/articles/rise-of-creator-economy',
   },
 ];
 

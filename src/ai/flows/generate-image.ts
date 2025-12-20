@@ -36,13 +36,18 @@ const generateImageFlow = ai.defineFlow(
   async input => {
     // Note: The flow currently doesn't use the reference images.
     // This is a placeholder for future implementation.
-    const { media } = await ai.generate({
+    const response = await ai.generate({
       model: 'googleai/imagen-4.0-fast-generate-001',
       prompt: `Generate an image for the following story: ${input.prompt}. Apply the following brand style: ${input.brand}.`,
     });
+    const responseMedia = response.media;
+    const mediaPart = Array.isArray(responseMedia) ? responseMedia[0] : responseMedia;
+    if (!mediaPart?.url) {
+      throw new Error('Imagen did not return a media URL.');
+    }
     
     return {
-      imageUrl: media.url,
+      imageUrl: mediaPart.url,
     };
   }
 );

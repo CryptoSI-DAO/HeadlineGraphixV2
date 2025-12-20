@@ -329,7 +329,7 @@ export default function GenerateImagePage() {
                   </div>
                   <h3 className="text-lg font-semibold mb-1 text-foreground">Your infographic will appear here</h3>
                   <p className="max-w-xs mx-auto text-sm">
-                    Configure your inputs and click 'Generate Infographic' to begin.
+                    Configure your inputs and click &lsquo;Generate Infographic&rsquo; to begin.
                   </p>
                 </div>
               )}

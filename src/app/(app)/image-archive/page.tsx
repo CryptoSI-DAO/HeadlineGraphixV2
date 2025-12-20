@@ -4,11 +4,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/Header';
-import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import { Upload, Download, Trash2, X, Plus, Info } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useReferenceImages } from '@/hooks/use-reference-images';
+import { ImageUploader, type UploadFile } from '@/components/ImageUploader';
+import { Upload, Download, Trash2, Plus, Info } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,38 +25,44 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
   } from "@/components/ui/dialog"
-import { ImageUploader } from '@/components/ImageUploader';
-import { cn } from '@/lib/utils';
-
-
 const TOTAL_SLOTS = 10;
 
 export default function ImageArchivePage() {
-  const { referenceImages, addReferenceImage, deleteReferenceImage } = useAppContext();
-  const [imageToDelete, setImageToDelete] = useState<ImagePlaceholder | null>(null);
-  const [imageToView, setImageToView] = useState<ImagePlaceholder | null>(null);
+  const { toast } = useToast();
+  const {
+    images: referenceImages,
+    isLoading,
+    isUploading,
+    uploadImages,
+    deleteImage,
+  } = useReferenceImages();
+  const [imageToDelete, setImageToDelete] = useState<typeof referenceImages[number] | null>(null);
+  const [imageToView, setImageToView] = useState<typeof referenceImages[number] | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<UploadFile[]>([]);
+  const [resetSignal, setResetSignal] = useState(0);
 
-  const handleSimulatedUpload = () => {
-    // This is a simulated upload. In a real app, you would handle the uploaded file.
-    const newImage = PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)];
-    addReferenceImage({ ...newImage, id: `sim-${Date.now()}` });
-    setIsUploadModalOpen(false);
-  };
-
-  const handleDeleteClick = (image: ImagePlaceholder) => {
+  const handleDeleteClick = (image: typeof referenceImages[number]) => {
     setImageToDelete(image);
   }
 
-  const handleInfoClick = (image: ImagePlaceholder) => {
+  const handleInfoClick = (image: typeof referenceImages[number]) => {
     setImageToView(image);
   }
 
-  const handleConfirmDelete = () => {
-    if (imageToDelete) {
-      deleteReferenceImage(imageToDelete.id);
+  const handleConfirmDelete = async () => {
+    if (!imageToDelete) return;
+    try {
+      await deleteImage(imageToDelete.id);
+      toast({ title: 'Image deleted' });
+    } catch (error) {
+      toast({
+        title: 'Delete failed',
+        description: (error as Error).message ?? 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
       setImageToDelete(null);
     }
   }
@@ -66,23 +72,49 @@ export default function ImageArchivePage() {
     return referenceImages[index] || null;
   });
 
+  const handleUploadSelected = async () => {
+    if (!pendingUploads.length) return;
+    try {
+      await uploadImages(pendingUploads.map((item) => item.file));
+      toast({ title: 'Images uploaded', description: 'Your reference images are now synced with Supabase.' });
+      setPendingUploads([]);
+      setResetSignal((prev) => prev + 1);
+      setIsUploadModalOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Upload failed',
+        description: (error as Error).message ?? 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <>
-      <Header title="Image Archive" />
+      <Header title="Image Archive">
+        <Button variant="outline" size="sm" onClick={() => setIsUploadModalOpen(true)}>
+          <Upload className="mr-2 h-4 w-4" /> Upload Images
+        </Button>
+      </Header>
       <main className="p-4 md:p-6">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {slots.map((image, index) =>
+          {isLoading ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <p>Loading your reference images...</p>
+            </div>
+          ) : (
+          slots.map((image, index) =>
             image ? (
               <div 
                 key={image.id}
                 className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer border-4 border-transparent"
               >
-                <Image 
-                  src={image.imageUrl} 
-                  alt={image.description} 
+                <Image
+                  src={image.imageUrl}
+                  alt={image.description}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  data-ai-hint={image.imageHint}
+                  data-ai-hint={image.aiHint}
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white" onClick={() => handleInfoClick(image)}>
@@ -108,7 +140,7 @@ export default function ImageArchivePage() {
                     </div>
                 </button>
             )
-          )}
+          ))}
         </div>
       </main>
 
@@ -158,7 +190,7 @@ export default function ImageArchivePage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">AI Hint:</span>
-                    <span className="font-mono bg-muted px-2 py-1 rounded-md">{imageToView.imageHint}</span>
+                    <span className="font-mono bg-muted px-2 py-1 rounded-md">{imageToView.aiHint ?? '—'}</span>
                   </div>
                 </div>
               </div>
@@ -167,19 +199,34 @@ export default function ImageArchivePage() {
         </DialogContent>
       </Dialog>
       
-        <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Upload Image</DialogTitle>
-                    <DialogDescription>
-                        Add a new image to your archive. You can upload from your device.
-                    </DialogDescription>
-                </DialogHeader>
-                <ImageUploader />
-                {/* The uploader is for show, this button simulates adding an image */}
-                <Button onClick={handleSimulatedUpload} className="w-full">Add Simulated Image</Button>
-            </DialogContent>
-        </Dialog>
+      <Dialog open={isUploadModalOpen} onOpenChange={(open) => {
+        setIsUploadModalOpen(open);
+        if (!open) {
+          setPendingUploads([]);
+          setResetSignal((prev) => prev + 1);
+        }
+      }}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Upload Image</DialogTitle>
+                <DialogDescription>
+                    Add a new image to your archive. You can upload from your device.
+                </DialogDescription>
+            </DialogHeader>
+            <ImageUploader
+              onFilesChange={setPendingUploads}
+              resetSignal={resetSignal}
+              disabled={isUploading}
+            />
+            <Button
+              onClick={handleUploadSelected}
+              className="w-full"
+              disabled={!pendingUploads.length || isUploading}
+            >
+              {isUploading ? 'Uploading...' : pendingUploads.length ? `Upload ${pendingUploads.length} file(s)` : 'Select files to upload'}
+            </Button>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
