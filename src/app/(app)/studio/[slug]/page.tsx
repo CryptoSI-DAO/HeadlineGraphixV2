@@ -69,6 +69,7 @@ export default function StudioPage() {
         brandTone,
         referenceImage: imageAsDataUrl,
         userAngle,
+        modelProvider: 'gemini',
       });
 
       setDrafts(generatedDrafts);

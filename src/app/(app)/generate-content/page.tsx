@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Header } from '@/components/Header';
@@ -38,7 +39,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateContentDraftsOutput } from '@/ai/flows/generate-content-drafts';
+import type { ContentModelProvider, GenerateContentDraftsOutput } from '@/ai/flows/generate-content-drafts';
 import { generateContentDrafts } from '@/ai/flows/generate-content-drafts';
 import {
   Sparkles,
@@ -52,25 +53,62 @@ import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const brandTones = ['Momentum Inc.'];
-const MOCK_ARTICLE = "In an era where digital presence is paramount, small and medium-sized businesses (SMBs) are increasingly turning to Artificial Intelligence (AI) to gain a competitive edge. AI-powered marketing tools, once the exclusive domain of large corporations with deep pockets, are now more accessible than ever. These tools offer sophisticated capabilities—from hyper-personalized customer communication and predictive analytics to automated content creation and dynamic ad optimization. By leveraging AI, SMBs can not only streamline their marketing operations but also uncover deep insights into customer behavior, allowing them to craft more effective and targeted campaigns. This technological shift is leveling the playing field, enabling smaller players to compete more effectively and achieve significant growth in a crowded marketplace.";
+const modelOptions: { value: ContentModelProvider; label: string; description: string }[] = [
+  {
+    value: 'gemini',
+    label: 'Gemini',
+    description: 'Best quality + image support',
+  },
+  {
+    value: 'glm',
+    label: 'GLM 4.5 Air (Free)',
+    description: 'OpenRouter GLM 4.5 Air · $0',
+  },
+];
+const DEFAULT_ARTICLE_CONTENT =
+  "In an era where digital presence is paramount, small and medium-sized businesses (SMBs) are increasingly turning to Artificial Intelligence (AI) to gain a competitive edge. AI-powered marketing tools, once the exclusive domain of large corporations with deep pockets, are now more accessible than ever. These tools offer sophisticated capabilities—from hyper-personalized customer communication and predictive analytics to automated content creation and dynamic ad optimization. By leveraging AI, SMBs can not only streamline their marketing operations but also uncover deep insights into customer behavior, allowing them to craft more effective and targeted campaigns. This technological shift is leveling the playing field, enabling smaller players to compete more effectively and achieve significant growth in a crowded marketplace.";
 
 
 export default function GenerateContentPage() {
   const { addHistoryItem } = useAppContext();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  const prefilledHeadline = searchParams.get('headline');
+  const prefilledSummary = searchParams.get('summary');
+  const prefilledSource = searchParams.get('source');
+  const prefilledUrl = searchParams.get('url');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [drafts, setDrafts] = useState<GenerateContentDraftsOutput | null>(null);
 
-  const [headline, setHeadline] = useState('AI-Powered Content Generation');
+  const [headline, setHeadline] = useState(prefilledHeadline ?? 'AI-Powered Content Generation');
   const [useFullArticle, setUseFullArticle] = useState<'yes' | 'no'>('no');
   const [brandTone, setBrandTone] = useState(brandTones[0]);
   const [selectedImage, setSelectedImage] = useState(PlaceHolderImages[0].imageUrl);
-  const [userAngle, setUserAngle] = useState('');
+  const [articleContent, setArticleContent] = useState(prefilledSummary ?? DEFAULT_ARTICLE_CONTENT);
+  const [userAngle, setUserAngle] = useState(prefilledSummary ?? '');
   const [includeBacklinks, setIncludeBacklinks] = useState(true);
+  const [modelProvider, setModelProvider] = useState<ContentModelProvider>('gemini');
   
   const [activeTab, setActiveTab] = useState('draft');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (prefilledHeadline) {
+      setHeadline(prefilledHeadline);
+    }
+  }, [prefilledHeadline]);
+
+  useEffect(() => {
+    if (prefilledSummary && prefilledSummary.trim().length > 0) {
+      setArticleContent(prefilledSummary);
+      setUserAngle(prefilledSummary);
+    } else {
+      setArticleContent(DEFAULT_ARTICLE_CONTENT);
+      setUserAngle('');
+    }
+  }, [prefilledSummary]);
 
   const getBase64FromUrl = async (url: string): Promise<string> => {
     const response = await fetch(url);
@@ -92,10 +130,11 @@ export default function GenerateContentPage() {
 
       const generatedDrafts = await generateContentDrafts({
         headline,
-        articleContent: useFullArticle === 'yes' ? MOCK_ARTICLE : undefined,
+        articleContent: useFullArticle === 'yes' && articleContent.trim().length > 0 ? articleContent : undefined,
         brandTone,
         referenceImage: imageAsDataUrl,
         userAngle,
+        modelProvider,
       });
 
       setDrafts(generatedDrafts);
@@ -145,6 +184,31 @@ export default function GenerateContentPage() {
     <>
       <Header title="Content Generation Studio" />
       <main className="flex-1 p-4 md:p-6">
+        <div className="mb-6 rounded-lg border bg-muted/40 p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium">AI Model</p>
+              <p className="text-sm text-muted-foreground">Choose which provider powers your content drafts.</p>
+            </div>
+            <div className="flex gap-2">
+              {modelOptions.map(option => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={modelProvider === option.value ? 'default' : 'ghost'}
+                  className={cn(
+                    'min-w-[140px] flex flex-1 flex-col items-start gap-1 border',
+                    modelProvider === option.value ? 'shadow-sm' : 'border-transparent'
+                  )}
+                  onClick={() => setModelProvider(option.value)}
+                >
+                  <span className="text-sm font-semibold">{option.label}</span>
+                  <span className="text-xs text-muted-foreground">{option.description}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
         <p className="text-muted-foreground mb-8 max-w-2xl">
           Configure your inputs on the left and review the generated drafts on the right.
         </p>
@@ -163,10 +227,24 @@ export default function GenerateContentPage() {
                         <DialogContent className="max-w-2xl">
                             <DialogHeader>
                                 <DialogTitle>{headline}</DialogTitle>
-                                <DialogDescription>Full article content</DialogDescription>
+                                <DialogDescription>
+                                  Full article content
+                                  {prefilledSource ? ` from ${prefilledSource}` : ''}
+                                </DialogDescription>
                             </DialogHeader>
                             <div className="prose max-w-none dark:prose-invert max-h-[60vh] overflow-y-auto">
-                                <p>{MOCK_ARTICLE}</p>
+                                <p>{articleContent}</p>
+                                {prefilledUrl && (
+                                  <Button
+                                    asChild
+                                    variant="link"
+                                    className="px-0 h-auto font-semibold"
+                                  >
+                                    <a href={prefilledUrl} target="_blank" rel="noopener noreferrer">
+                                      Open original article
+                                    </a>
+                                  </Button>
+                                )}
                             </div>
                         </DialogContent>
                     </Dialog>

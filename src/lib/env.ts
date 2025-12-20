@@ -9,10 +9,14 @@ const requiredEnvVars = {
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 } as const;
 
-export function validateEnv() {
-  const missing = Object.entries(requiredEnvVars)
+export function getMissingEnvVars() {
+  return Object.entries(requiredEnvVars)
     .filter(([_, value]) => !value)
     .map(([key]) => key);
+}
+
+export function validateEnv() {
+  const missing = getMissingEnvVars();
 
   if (missing.length > 0) {
     console.error('Missing required environment variables:', missing);

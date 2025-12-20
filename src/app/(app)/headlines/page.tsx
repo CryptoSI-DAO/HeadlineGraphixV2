@@ -55,7 +55,17 @@ const HeadlineCard = ({ headline }: { headline: Headline }) => (
           </a>
         </Button>
         <Button asChild>
-            <Link href={`/studio/${headline.slug}`}>
+            <Link
+              href={{
+                pathname: '/generate-content',
+                query: {
+                  headline: headline.title,
+                  summary: headline.content ?? '',
+                  source: headline.source,
+                  url: headline.url,
+                },
+              }}
+            >
                 <Sparkles /> Generate Content
             </Link>
         </Button>
