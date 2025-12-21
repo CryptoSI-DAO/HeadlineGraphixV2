@@ -139,7 +139,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Supabase Setup
 1. Create a new Supabase project at [Supabase](https://supabase.com/) and note the **Project Reference** plus API keys.
-2. In the SQL editor (or via MCP), create the tables described in the implementation plan (`profiles`, `reference_images`, `content_packs`).
+2. In the SQL editor (or via MCP), create the tables described in the implementation plan (`hgprofiles`, `reference_images`, `content_packs`).
 3. Create a Storage bucket (e.g., `reference-images`) and configure public/private access per your needs.
 4. Enable Row Level Security and add policies that scope data to the authenticated user (or the temporary demo user) before shipping to production.
 5. Install the Supabase CLI and configure the Supabase MCP server so automations and the Codex CLI can run migrations/queries with the service role key.
@@ -216,7 +216,7 @@ HeadlineGraphixV2/
 
 ## Data Model
 
-See `docs/data-model.md` for a full breakdown of the Supabase tables and JSON shapes (profiles, reference images, AI preferences, and content packs).
+See `docs/data-model.md` for a full breakdown of the Supabase tables and JSON shapes (hgprofiles, reference images, AI preferences, and content packs).
 
 ## AI Flows
 

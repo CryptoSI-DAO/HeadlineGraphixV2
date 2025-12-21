@@ -31,7 +31,7 @@ This document lays out a step-by-step plan to take HeadlineGraphix V2 from its c
    - For now, hardcode a single dummy user ID (see the `DEMO_USER_ID` constant in `src/lib/data`, currently `00000000-0000-0000-0000-000000000001`). All reads/writes target this row. Replace later when auth lands.
 3. **Supabase Database**
    - Create tables/schemas:
-     - `profiles` – stores preferences, credit count, onboarding state.
+     - `hgprofiles` – stores preferences, credit count, onboarding state.
      - `reference_images` – metadata + Storage path (scoped by `user_id`).
      - `content_packs` – generated drafts + configs, references the profile.
    - Seed the dummy user with the mock data currently in `AppContext` using Supabase SQL (via MCP or the dashboard SQL editor).

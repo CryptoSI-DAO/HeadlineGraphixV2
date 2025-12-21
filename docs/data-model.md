@@ -2,7 +2,7 @@
 
 This document describes the Supabase tables that back the HeadlineGraphix experience. Fields are expressed using PostgreSQL-friendly types, but the same structure can be serialized to JSON for mocks or seed files.
 
-## `profiles`
+## `hgprofiles`
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -40,7 +40,7 @@ Although the profile JSON stores a quick cache for rendering, every uploaded ima
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key. |
-| `user_id` | `uuid` | FK → `profiles.id`. |
+| `user_id` | `uuid` | FK → `hgprofiles.id`. |
 | `storage_path` | `text` | Path inside the Supabase Storage bucket. |
 | `image_url` | `text` | Signed/public URL. |
 | `description` | `text` | User-entered description or AI hint. |
@@ -52,14 +52,14 @@ Although the profile JSON stores a quick cache for rendering, every uploaded ima
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key. |
-| `user_id` | `uuid` | FK → `profiles.id`. |
+| `user_id` | `uuid` | FK → `hgprofiles.id`. |
 | `headline_id` | `text` | Headline slug or external id. |
 | `headline` | `text` | Snapshot of the source headline. |
 | `config` | `jsonb` | Input configuration `{ brandTone, referenceImage, userAngle, backlinks[] }`. |
 | `drafts` | `jsonb` | Draft payload `{ blogPost, linkedInPost, infographicUrl }`. |
 | `generated_at` | `timestamptz` | When the AI job finished. |
 
-The `content_history` JSON inside `profiles` stores a limited slice of the most recent `content_packs.id` values for instant access. When the UI needs deeper history it should query the `content_packs` table directly.
+The `content_history` JSON inside `hgprofiles` stores a limited slice of the most recent `content_packs.id` values for instant access. When the UI needs deeper history it should query the `content_packs` table directly.
 
 ---
 

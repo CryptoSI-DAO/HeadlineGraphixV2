@@ -6,8 +6,8 @@ Run the statements below in the Supabase SQL Editor (or via the CLI/MCP) to prov
 -- Ensure pgcrypto is available for gen_random_uuid()
 create extension if not exists pgcrypto;
 
--- profiles ---------------------------------------------------------------
-create table if not exists public.profiles (
+-- hgprofiles ---------------------------------------------------------------
+create table if not exists public.hgprofiles (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
   name text not null,
@@ -22,9 +22,9 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
-comment on table public.profiles is 'User profile, preferences, and cached reference data';
+comment on table public.hgprofiles is 'User profile, preferences, and cached reference data';
 
-create index if not exists profiles_email_idx on public.profiles(email);
+create index if not exists profiles_email_idx on public.hgprofiles(email);
 
 create or replace function public.handle_profiles_updated_at()
 returns trigger as $$
@@ -35,13 +35,13 @@ end;
 $$ language plpgsql;
 
 create trigger profiles_updated_at
-before update on public.profiles
+before update on public.hgprofiles
 for each row execute function public.handle_profiles_updated_at();
 
 -- reference_images -------------------------------------------------------
 create table if not exists public.reference_images (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null references public.hgprofiles(id) on delete cascade,
   storage_path text not null,
   image_url text not null,
   description text,
@@ -54,7 +54,7 @@ create index if not exists reference_images_user_idx on public.reference_images(
 -- content_packs ----------------------------------------------------------
 create table if not exists public.content_packs (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null references public.hgprofiles(id) on delete cascade,
   headline_id text,
   headline text not null,
   config jsonb not null default '{}'::jsonb,
@@ -66,14 +66,14 @@ create index if not exists content_packs_user_idx on public.content_packs(user_i
 create index if not exists content_packs_headline_idx on public.content_packs(headline_id);
 
 -- Row Level Security -----------------------------------------------------
-alter table public.profiles enable row level security;
+alter table public.hgprofiles enable row level security;
 alter table public.reference_images enable row level security;
 alter table public.content_packs enable row level security;
 
 -- Replace these policies when auth lands; for now allow the demo user id.
-drop policy if exists "profiles demo access" on public.profiles;
-create policy "profiles demo access"
-  on public.profiles
+drop policy if exists "hgprofiles demo access" on public.hgprofiles;
+create policy "hgprofiles demo access"
+  on public.hgprofiles
   for all
   using (id = '00000000-0000-0000-0000-000000000001'::uuid)
   with check (id = '00000000-0000-0000-0000-000000000001'::uuid);
@@ -105,7 +105,7 @@ declare
   demo_user uuid := '00000000-0000-0000-0000-000000000001';
   latest_pack uuid;
 begin
-  insert into public.profiles (
+  insert into public.hgprofiles (
     id,
     email,
     name,
@@ -190,7 +190,7 @@ $linkedin$,
   )
   returning id into latest_pack;
 
-  update public.profiles
+  update public.hgprofiles
     set content_history = jsonb_build_array(latest_pack::text),
         reference_images = jsonb_build_array(
           jsonb_build_object('id', 'ref-1', 'storagePath', 'placeholders/ref-1.jpg', 'imageUrl', 'https://images.unsplash.com/photo-1512998844734-cd2cca565822?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzY0MTM4MTI4fDA&ixlib=rb-4.1.0&q=80&w=1080', 'aiHint', 'abstract architecture', 'createdAt', timezone('utc', now())),
