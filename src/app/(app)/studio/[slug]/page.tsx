@@ -67,7 +67,7 @@ export default function StudioPage() {
       const generatedDrafts = await generateContentDrafts({
         headline: headline.title,
         brandTone,
-        referenceImage: imageAsDataUrl,
+        referenceImages: [imageAsDataUrl],
         userAngle,
         modelProvider: 'gemini',
       });

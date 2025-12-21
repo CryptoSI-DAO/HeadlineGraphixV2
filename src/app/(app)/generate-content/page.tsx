@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -48,6 +48,7 @@ import {
   Pencil,
   PlusSquare,
   Expand,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -56,8 +57,8 @@ const brandTones = ['Momentum Inc.'];
 const modelOptions: { value: ContentModelProvider; label: string; description: string }[] = [
   {
     value: 'gemini',
-    label: 'Gemini',
-    description: 'Best quality + image support',
+    label: 'MiMo V2 Flash (Free)',
+    description: 'OpenRouter MiMo V2 Flash · $0',
   },
   {
     value: 'glm',
@@ -70,7 +71,7 @@ const DEFAULT_ARTICLE_CONTENT =
 
 
 export default function GenerateContentPage() {
-  const { addHistoryItem } = useAppContext();
+  const { addHistoryItem, preferences } = useAppContext();
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -85,11 +86,19 @@ export default function GenerateContentPage() {
   const [headline, setHeadline] = useState(prefilledHeadline ?? 'AI-Powered Content Generation');
   const [useFullArticle, setUseFullArticle] = useState<'yes' | 'no'>('no');
   const [brandTone, setBrandTone] = useState(brandTones[0]);
-  const [selectedImage, setSelectedImage] = useState(PlaceHolderImages[0].imageUrl);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [articleContent, setArticleContent] = useState(prefilledSummary ?? DEFAULT_ARTICLE_CONTENT);
+  const [baseArticleContent, setBaseArticleContent] = useState(prefilledSummary ?? DEFAULT_ARTICLE_CONTENT);
+  const [isFetchingArticle, setIsFetchingArticle] = useState(false);
+  const [articleUrlOverride, setArticleUrlOverride] = useState('');
+  const [referenceImages, setReferenceImages] = useState(PlaceHolderImages.slice(0, 3));
+  const [isLoadingArchiveImages, setIsLoadingArchiveImages] = useState(false);
   const [userAngle, setUserAngle] = useState(prefilledSummary ?? '');
   const [includeBacklinks, setIncludeBacklinks] = useState(true);
   const [modelProvider, setModelProvider] = useState<ContentModelProvider>('gemini');
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [estimatedSeconds, setEstimatedSeconds] = useState<number | null>(null);
   
   const [activeTab, setActiveTab] = useState('draft');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -103,12 +112,119 @@ export default function GenerateContentPage() {
   useEffect(() => {
     if (prefilledSummary && prefilledSummary.trim().length > 0) {
       setArticleContent(prefilledSummary);
+      setBaseArticleContent(prefilledSummary);
       setUserAngle(prefilledSummary);
     } else {
       setArticleContent(DEFAULT_ARTICLE_CONTENT);
+      setBaseArticleContent(DEFAULT_ARTICLE_CONTENT);
       setUserAngle('');
     }
   }, [prefilledSummary]);
+
+
+  const isGoogleNewsUrl = (url?: string | null) => {
+    if (!url) return false;
+    try {
+      const hostname = new URL(url).hostname;
+      return hostname === 'news.google.com' || hostname.endsWith('.news.google.com');
+    } catch {
+      return false;
+    }
+  };
+
+  const resolvedArticleUrl = articleUrlOverride.trim() || prefilledUrl || '';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (useFullArticle === 'yes' && resolvedArticleUrl) {
+      if (!articleUrlOverride.trim() && isGoogleNewsUrl(resolvedArticleUrl)) {
+        console.warn('Full article fetch skipped: Google News URL needs an original article link.');
+        setIsFetchingArticle(false);
+        return () => {
+          cancelled = true;
+        };
+      }
+      setIsFetchingArticle(true);
+      fetch(`/api/fetch-article?url=${encodeURIComponent(resolvedArticleUrl)}`)
+        .then(async response => {
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Request failed (${response.status}).`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          const fullContent = typeof data?.content === 'string' ? data.content : '';
+          if (process.env.NODE_ENV !== 'production') {
+            console.info('fetch-article result', {
+              resolvedUrl: data?.resolvedUrl,
+              contentLength: fullContent.length,
+            });
+          }
+          if (!cancelled && fullContent.trim().length >= 600) {
+            setArticleContent(fullContent);
+          }
+        })
+        .catch(error => {
+          if (!cancelled) {
+            console.error('Failed to fetch full article content:', error);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setIsFetchingArticle(false);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (useFullArticle === 'no') {
+      setArticleContent(baseArticleContent);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [useFullArticle, prefilledUrl, baseArticleContent]);
+
+  const activeModelLabel = modelOptions.find(option => option.value === modelProvider)?.label ?? 'Model';
+
+  const estimateForInput = (provider: ContentModelProvider) => {
+    const base = provider === 'glm' ? 18 : 14;
+    const perChar = provider === 'glm' ? 0.004 : 0.003;
+    const articleChars = useFullArticle === 'yes' ? articleContent.length : 0;
+    const inputChars = headline.length + userAngle.length + articleChars;
+    const imagePenalty = 8;
+    const estimate = Math.round(base + inputChars * perChar + imagePenalty);
+    return Math.max(8, Math.min(estimate, 120));
+  };
+
+  const inputEstimateSeconds = useMemo(
+    () => estimateForInput(modelProvider),
+    [modelProvider, articleContent, useFullArticle, headline, userAngle]
+  );
+
+  useEffect(() => {
+    if (!isGenerating || generationStartedAt === null) {
+      setElapsedSeconds(0);
+      setEstimatedSeconds(null);
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - generationStartedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isGenerating, generationStartedAt]);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+    setEstimatedSeconds(inputEstimateSeconds);
+  }, [isGenerating, inputEstimateSeconds]);
 
   const getBase64FromUrl = async (url: string): Promise<string> => {
     const response = await fetch(url);
@@ -124,15 +240,22 @@ export default function GenerateContentPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     setDrafts(null);
+    setGenerationStartedAt(Date.now());
     
     try {
-      const imageAsDataUrl = await getBase64FromUrl(selectedImage);
+      const imageAsDataUrls = selectedImages.length > 0
+        ? await Promise.all(selectedImages.map(getBase64FromUrl))
+        : [];
 
+      setEstimatedSeconds(inputEstimateSeconds);
       const generatedDrafts = await generateContentDrafts({
         headline,
         articleContent: useFullArticle === 'yes' && articleContent.trim().length > 0 ? articleContent : undefined,
+        articleUrl: useFullArticle === 'yes' ? (resolvedArticleUrl || undefined) : undefined,
+        includeBacklinks,
+        backlinkUrls: preferences.backlinkUrls,
         brandTone,
-        referenceImage: imageAsDataUrl,
+        referenceImages: imageAsDataUrls.length > 0 ? imageAsDataUrls : undefined,
         userAngle,
         modelProvider,
       });
@@ -151,6 +274,7 @@ export default function GenerateContentPage() {
       });
     } finally {
       setIsGenerating(false);
+      setGenerationStartedAt(null);
     }
   };
 
@@ -158,7 +282,7 @@ export default function GenerateContentPage() {
     if (!drafts) return;
     addHistoryItem({
       headline,
-      config: { brandTone, referenceImage: selectedImage, userAngle },
+      config: { brandTone, referenceImage: selectedImages[0] ?? '', userAngle },
       drafts,
     });
     toast({
@@ -178,7 +302,43 @@ export default function GenerateContentPage() {
     });
   }
 
-  const referenceImages = PlaceHolderImages.slice(0, 3);
+  const toggleReferenceImage = (imageUrl: string) => {
+    setSelectedImages((prev) =>
+      prev.includes(imageUrl)
+        ? prev.filter((url) => url !== imageUrl)
+        : [...prev, imageUrl]
+    );
+  };
+
+  const handleFetchArchiveImages = async () => {
+    setIsLoadingArchiveImages(true);
+    try {
+      const response = await fetch('/api/reference-images');
+      if (!response.ok) {
+        throw new Error('Unable to load reference images.');
+      }
+      const payload = await response.json();
+      const images = Array.isArray(payload?.images) ? payload.images : [];
+      if (images.length > 0) {
+        const mapped = images.map((image: any) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          description: image.description ?? 'Reference image',
+          imageHint: image.aiHint ?? '',
+        }));
+        setReferenceImages(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to load reference images', error);
+      toast({
+        variant: 'destructive',
+        title: 'Image Archive Unavailable',
+        description: 'Unable to load your archived images. Please try again.',
+      });
+    } finally {
+      setIsLoadingArchiveImages(false);
+    }
+  };
 
   return (
     <>
@@ -233,6 +393,9 @@ export default function GenerateContentPage() {
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="prose max-w-none dark:prose-invert max-h-[60vh] overflow-y-auto">
+                                {isFetchingArticle && (
+                                  <p className="text-xs text-muted-foreground">Fetching full article…</p>
+                                )}
                                 <p>{articleContent}</p>
                                 {prefilledUrl && (
                                   <Button
@@ -250,9 +413,9 @@ export default function GenerateContentPage() {
                     </Dialog>
                 </div>
                 <Input id="headline" value={headline} onChange={(e) => setHeadline(e.target.value)} />
-                 <div className="flex items-center space-x-4 pt-2">
+                 <div className="flex items-center pt-2">
                     <Label>Use full article for context?</Label>
-                    <RadioGroup value={useFullArticle} onValueChange={(value: 'yes'|'no') => setUseFullArticle(value)} className="flex items-center">
+                    <RadioGroup value={useFullArticle} onValueChange={(value: 'yes'|'no') => setUseFullArticle(value)} className="ml-4 flex items-center">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="yes" id="r-yes" />
                             <Label htmlFor="r-yes">Yes</Label>
@@ -262,6 +425,36 @@ export default function GenerateContentPage() {
                             <Label htmlFor="r-no">No</Label>
                         </div>
                     </RadioGroup>
+                    <div className="ml-auto">
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">View Article</Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                  <DialogTitle>{headline}</DialogTitle>
+                                  <DialogDescription>
+                                    Full article content
+                                    {prefilledSource ? ` from ${prefilledSource}` : ''}
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <div className="prose max-w-none dark:prose-invert max-h-[60vh] overflow-y-auto">
+                                  <p>{articleContent}</p>
+                                  {prefilledUrl && (
+                                  <Button
+                                    asChild
+                                    variant="link"
+                                    className="px-0 h-auto font-semibold"
+                                  >
+                                    <a href={resolvedArticleUrl || '#'} target="_blank" rel="noopener noreferrer">
+                                      Open original article
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
+                          </DialogContent>
+                      </Dialog>
+                    </div>
                 </div>
             </div>
 
@@ -281,16 +474,42 @@ export default function GenerateContentPage() {
               </Select>
             </div>
 
+            {prefilledUrl && isGoogleNewsUrl(prefilledUrl) && (
+              <div className="space-y-2">
+                <Label htmlFor="article-url">Original article URL</Label>
+                <Input
+                  id="article-url"
+                  placeholder="Paste the original article link (not news.google.com)"
+                  value={articleUrlOverride}
+                  onChange={(e) => setArticleUrlOverride(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Google News links cannot be scraped directly. Add the source link for full context.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-4">
-              <Label>Select Reference Images (1/{referenceImages.length})</Label>
+              <div className="flex items-center justify-between">
+                <Label>Select Reference Images ({selectedImages.length}/{referenceImages.length})</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchArchiveImages}
+                  disabled={isLoadingArchiveImages}
+                >
+                  {isLoadingArchiveImages ? 'Loading...' : 'Fetch from archive'}
+                </Button>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 {referenceImages.map((img) => (
                   <button
                     key={img.id}
-                    onClick={() => setSelectedImage(img.imageUrl)}
+                    onClick={() => toggleReferenceImage(img.imageUrl)}
                     className={cn(
                       'rounded-lg overflow-hidden relative border-2 transition-all',
-                      selectedImage === img.imageUrl
+                      selectedImages.includes(img.imageUrl)
                         ? 'border-primary ring-2 ring-primary ring-offset-2'
                         : 'border-muted hover:border-primary/50'
                     )}
@@ -303,7 +522,7 @@ export default function GenerateContentPage() {
                       className="object-cover aspect-square"
                       data-ai-hint={img.imageHint}
                     />
-                    {selectedImage === img.imageUrl && (
+                    {selectedImages.includes(img.imageUrl) && (
                       <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
                         <CheckCircle size={16} />
                       </div>
@@ -340,7 +559,14 @@ export default function GenerateContentPage() {
               onClick={handleGenerate}
               disabled={isGenerating}
             >
-              {isGenerating ? 'Generating...' : 'Generate Content'}
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Generating{elapsedSeconds > 0 ? ` · ${elapsedSeconds}s` : '...'}
+                </>
+              ) : (
+                'Generate Content'
+              )}
               <Sparkles className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -351,7 +577,22 @@ export default function GenerateContentPage() {
             <Card className="min-h-[500px]">
               <CardContent className="p-0">
                 {isGenerating ? (
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Generating with {activeModelLabel}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {elapsedSeconds > 0 ? `Elapsed ${elapsedSeconds}s` : 'Warming up the model...'}
+                          {estimatedSeconds ? ` · Estimated ${estimatedSeconds}s` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-full w-1/3 bg-primary/70 animate-pulse" />
+                    </div>
                     <Skeleton className="h-8 w-1/3" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
@@ -364,7 +605,6 @@ export default function GenerateContentPage() {
                         <TabsList>
                             <TabsTrigger value="draft">Draft</TabsTrigger>
                             <TabsTrigger value="preview">Preview</TabsTrigger>
-                            <TabsTrigger value="infographic">Infographic</TabsTrigger>
                         </TabsList>
                         <div className="flex items-center gap-2">
                             {activeTab === 'preview' && (
@@ -389,11 +629,6 @@ export default function GenerateContentPage() {
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {drafts.blogPost}
                             </ReactMarkdown>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="infographic" className="mt-4 p-6 flex justify-center">
-                        <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden border">
-                            <Image src={drafts.infographic} alt="Generated Infographic" fill className="object-cover" />
                         </div>
                     </TabsContent>
                   </Tabs>

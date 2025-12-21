@@ -24,7 +24,7 @@ export const NEWS_PROVIDER_OPTIONS: NewsProviderMeta[] = [
   },
 ] as const;
 
-export const DEFAULT_NEWS_PROVIDER: NewsProviderId = 'google-news';
+export const DEFAULT_NEWS_PROVIDER: NewsProviderId = 'bing-news';
 
 export const NEWS_PROVIDER_META_MAP: Record<NewsProviderId, NewsProviderMeta> = NEWS_PROVIDER_OPTIONS.reduce(
   (acc, meta) => {

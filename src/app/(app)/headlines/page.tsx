@@ -118,8 +118,17 @@ export default function HeadlinesPage() {
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('hg:news-provider') : null;
+    const migrated = typeof window !== 'undefined' ? window.localStorage.getItem('hg:news-provider-migrated') : null;
     if (isValidNewsProvider(stored)) {
-      setProvider(stored);
+      if (!migrated && stored === 'google-news') {
+        window.localStorage.setItem('hg:news-provider', DEFAULT_NEWS_PROVIDER);
+        window.localStorage.setItem('hg:news-provider-migrated', 'true');
+        setProvider(DEFAULT_NEWS_PROVIDER);
+      } else {
+        setProvider(stored);
+      }
+    } else {
+      setProvider(DEFAULT_NEWS_PROVIDER);
     }
   }, []);
 

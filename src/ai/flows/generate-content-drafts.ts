@@ -10,6 +10,7 @@
 
 import {ai, isAiReady} from '@/ai/genkit';
 import {z} from 'genkit';
+import {extractArticleFromUrl} from '@/lib/article-extractor';
 
 const MODEL_PROVIDERS = ['gemini', 'glm'] as const;
 export type ContentModelProvider = typeof MODEL_PROVIDERS[number];
@@ -17,12 +18,17 @@ export type ContentModelProvider = typeof MODEL_PROVIDERS[number];
 const GenerateContentDraftsInputSchema = z.object({
   headline: z.string().describe('The headline for which content needs to be generated.'),
   articleContent: z.string().describe('The full content of the article to be used as context.').optional(),
+  articleUrl: z.string().url().describe('The URL of the original article.').optional(),
+  includeBacklinks: z.boolean().describe('Whether to include backlinks in the content.').optional(),
+  backlinkUrls: z.array(z.string().url()).describe('A list of backlink URLs to weave into the content.').optional(),
   brandTone: z.string().describe('The brand tone to use for the content.'),
-  referenceImage: z
-    .string()
-    .describe(
-      'A reference image to guide the content generation, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
-    ).optional(),
+  referenceImages: z
+    .array(
+      z.string().describe(
+        'A reference image to guide the content generation, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
+      )
+    )
+    .optional(),
   userAngle: z.string().describe('The user-provided angle or focus for the content.'),
   modelProvider: z.enum(MODEL_PROVIDERS).default('gemini'),
 });
@@ -40,58 +46,34 @@ export async function generateContentDrafts(input: GenerateContentDraftsInput): 
   if (normalizedInput.modelProvider === 'glm') {
     return generateContentDraftsWithGlm(normalizedInput);
   }
-  return generateContentDraftsFlow(normalizedInput);
+  return generateContentDraftsWithOpenRouter(normalizedInput);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateContentDraftsPrompt',
-  input: {schema: GenerateContentDraftsInputSchema},
-  output: {schema: GenerateContentDraftsOutputSchema},
-  prompt: `You are a content creation expert. Generate a blog post and a LinkedIn post based on the following information for the headline: {{{headline}}}.
-
-  {{#if articleContent}}
-  Use the following article as the primary source of information:
-  {{{articleContent}}}
-  {{/if}}
-
-  Incorporate the following brand tone: {{{brandTone}}}.
-  Incorporate the following angle provided by the user: {{{userAngle}}}.
-
-  {{#if referenceImage}}
-  Consider the following reference image: {{media url=referenceImage}}
-  {{/if}}
-
-  The blog post should be in markdown format.
-  The LinkedIn post should be shorter and also in markdown format.
-  Also generate a URL for a infographic image related to the content.
-  Output the infographic image as a URL.
-`,
-});
-
-const generateContentDraftsFlow = ai.defineFlow(
-  {
-    name: 'generateContentDraftsFlow',
-    inputSchema: GenerateContentDraftsInputSchema,
-    outputSchema: GenerateContentDraftsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error("The model did not return a response. Please try again.");
-    }
-
-    return ensureInfographicUrl(output, input.headline, {requireImagen: true});
-  }
-);
-
-async function generateContentDraftsWithGlm(input: GenerateContentDraftsInput): Promise<GenerateContentDraftsOutput> {
-  const prompt = buildGlmPrompt(input);
-  const glmResponse = await requestGlmCompletion(prompt);
-  const parsed = parseGlmResponse(glmResponse);
+async function generateContentDraftsWithOpenRouter(
+  input: GenerateContentDraftsInput
+): Promise<GenerateContentDraftsOutput> {
+  const startedAt = Date.now();
+  const enrichedInput = await maybeExpandArticleContent(input);
+  const prompt = buildModelPrompt(enrichedInput);
+  const response = await requestOpenRouterCompletion(prompt);
+  const parsed = parseModelResponse(response, 'OpenRouter');
+  const elapsedMs = Date.now() - startedAt;
+  console.info('OpenRouter generation completed', {elapsedMs});
   return ensureInfographicUrl(parsed, input.headline, {requireImagen: false});
 }
 
-function buildGlmPrompt(input: GenerateContentDraftsInput) {
+async function generateContentDraftsWithGlm(input: GenerateContentDraftsInput): Promise<GenerateContentDraftsOutput> {
+  const startedAt = Date.now();
+  const enrichedInput = await maybeExpandArticleContent(input);
+  const prompt = buildModelPrompt(enrichedInput);
+  const glmResponse = await requestGlmCompletion(prompt);
+  const parsed = parseModelResponse(glmResponse, 'GLM');
+  const elapsedMs = Date.now() - startedAt;
+  console.info('GLM generation completed', {elapsedMs});
+  return ensureInfographicUrl(parsed, input.headline, {requireImagen: false});
+}
+
+function buildModelPrompt(input: GenerateContentDraftsInput) {
   const sections = [
     `Headline: ${input.headline}`,
     input.articleContent ? `Article Content (context):\n${input.articleContent}` : 'Article Content: (not provided)',
@@ -99,46 +81,177 @@ function buildGlmPrompt(input: GenerateContentDraftsInput) {
     `User Angle: ${input.userAngle || 'None provided'}`,
   ];
 
-  if (input.referenceImage) {
-    sections.push('A reference image was provided to guide style and mood, but you cannot access binary data. Infer a cohesive visual direction based on the other inputs.');
+  if (input.referenceImages && input.referenceImages.length > 0) {
+    sections.push(
+      `Reference image count: ${input.referenceImages.length}.`,
+      'Reference images were provided to guide style and mood, but you cannot access binary data. Infer a cohesive visual direction based on the other inputs.'
+    );
+  }
+
+  if (input.includeBacklinks && input.backlinkUrls && input.backlinkUrls.length > 0) {
+    sections.push(
+      `Include 2-3 relevant backlinks from this list: ${input.backlinkUrls.join(', ')}.`,
+      'Weave backlinks naturally into the blog post using markdown links.',
+      'Do not include backlinks in the LinkedIn post unless the user angle calls for it.'
+    );
+  } else {
+    sections.push('Do not include any backlinks.');
   }
 
   sections.push(
     'Generate a markdown blog post and a markdown LinkedIn post that align with the tone and angle.',
-    'Respond with a strict JSON object (no code fences, no explanations) that matches this schema: {"blogPost": string, "linkedInPost": string, "infographic": string}.',
+    'The blog post must be fully self-contained. Do not reference the source article, the headline source, or any external post.',
+    'If the headline or context implies a numbered list (e.g., Top 10), the blog post must include the complete list with all items.',
+    'If the article content is missing list items, infer a plausible full list without referencing the source.',
+    'Incorporate the user angle directly in the introduction and the closing call-to-action.',
+    'Respond with a strict JSON object (no code fences, no YAML front matter, no explanations) that matches this schema: {"blogPost": string, "linkedInPost": string, "infographic": string}.',
+    'Do not include titles, authors, or metadata outside the JSON fields.',
     'Set "infographic" to either a direct https URL for a relevant infographic or leave it as an empty string if you are unsure.'
   );
 
   return sections.join('\n\n');
 }
 
-async function requestGlmCompletion(prompt: string) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OpenRouter API key is not configured. Set OPENROUTER_API_KEY in your environment to use the free GLM model.');
+async function maybeExpandArticleContent(input: GenerateContentDraftsInput): Promise<GenerateContentDraftsInput> {
+  if (!input.articleUrl) {
+    return input;
   }
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://headlinegraphix.local',
-      'X-Title': 'HeadlineGraphix',
-    },
-    body: JSON.stringify({
-      model: 'zhipu/glm-4.5-air',
-      messages: [
+  const existing = input.articleContent?.trim() ?? '';
+  if (existing.length >= 800) {
+    return input;
+  }
+
+  try {
+    const extracted = await extractArticleFromUrl(input.articleUrl);
+    if (!extracted.content || extracted.content.trim().length < 600) {
+      return input;
+    }
+    return {
+      ...input,
+      articleContent: extracted.content,
+    };
+  } catch (error) {
+    console.warn('Failed to fetch article content:', error);
+    return input;
+  }
+}
+
+async function requestOpenRouterCompletion(prompt: string) {
+  const model = 'xiaomi/mimo-v2-flash:free';
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error('OpenRouter API key is not configured. Set OPENROUTER_API_KEY in your environment to use MiMo V2 Flash.');
+  }
+
+  const controller = new AbortController();
+  const timeoutMs = 90000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+  console.info('OpenRouter request started', {model});
+
+  let response: Response;
+  try {
+    response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://headlinegraphix.local',
+        'X-Title': 'HeadlineGraphix',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        response_format: {type: 'json_object'},
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a marketing content generator. Always return valid JSON with blogPost, linkedInPost, and infographic fields. Blog and LinkedIn content must be markdown. Return JSON only with no extra text. Do not reference source articles.',
+          },
+          {role: 'user', content: prompt},
+        ],
+        temperature: 0.7,
+      }),
+    });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error?.name === 'AbortError') {
+      throw new Error(`OpenRouter request timed out after ${Math.round(timeoutMs / 1000)}s.`);
+    }
+    throw error;
+  }
+  const elapsedMs = Date.now() - startedAt;
+  clearTimeout(timeoutId);
+  console.info('OpenRouter response received', {elapsedMs, status: response.status, model});
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+  }
+
+  const data = await response.json();
+  if (data.error) {
+    throw new Error(`OpenRouter API error: ${data.error.message ?? 'Unknown error'}`);
+  }
+
+  const message = data?.choices?.[0]?.message;
+  const content = extractMessageContent(message);
+  if (!content) {
+    throw new Error('OpenRouter API returned an empty response.');
+  }
+
+  return content;
+}
+
+async function requestGlmCompletion(prompt: string) {
+  const model = 'glm-4.5-air';
+  const apiKey = process.env.ZAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('Z.ai API key is not configured. Set ZAI_API_KEY in your environment to use the GLM model.');
+  }
+
+  const controller = new AbortController();
+  const timeoutMs = 90000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
+  console.info('GLM request started', {model});
+
+  let response: Response;
+  try {
+    response = await fetch('https://api.z.ai/api/coding/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Accept-Language': 'en-US,en',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages: [
         {
           role: 'system',
           content:
-            'You are a marketing content generator. Always return valid JSON with blogPost, linkedInPost, and infographic fields. Blog and LinkedIn content must be markdown.',
+            'You are a marketing content generator. Always return valid JSON with blogPost, linkedInPost, and infographic fields. Blog and LinkedIn content must be markdown. Do not reference source articles.',
         },
-        {role: 'user', content: prompt},
-      ],
-      temperature: 0.7,
-    }),
-  });
+          {role: 'user', content: prompt},
+        ],
+        temperature: 0.7,
+        stream: false,
+      }),
+    });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error?.name === 'AbortError') {
+      throw new Error(`GLM API request timed out after ${Math.round(timeoutMs / 1000)}s.`);
+    }
+    throw error;
+  }
+  const elapsedMs = Date.now() - startedAt;
+  clearTimeout(timeoutId);
+  console.info('GLM response received', {elapsedMs, status: response.status, model});
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -181,20 +294,20 @@ function extractMessageContent(message: any): string {
   return '';
 }
 
-function parseGlmResponse(rawResponse: string): GenerateContentDraftsOutput {
+function parseModelResponse(rawResponse: string, source: string): GenerateContentDraftsOutput {
   const jsonLike = extractJsonBlock(rawResponse);
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonLike);
   } catch (error) {
-    console.error('Failed to parse GLM response as JSON:', error, rawResponse);
-    throw new Error('GLM returned an invalid response. Please try again.');
+    console.error(`Failed to parse ${source} response as JSON:`, error, rawResponse);
+    throw new Error(`${source} returned an invalid response. Please try again.`);
   }
 
   const validated = GenerateContentDraftsOutputSchema.safeParse(parsed);
   if (!validated.success) {
-    console.error('GLM response failed validation:', validated.error.flatten());
-    throw new Error('GLM returned data in an unexpected format.');
+    console.error(`${source} response failed validation:`, validated.error.flatten());
+    throw new Error(`${source} returned data in an unexpected format.`);
   }
 
   return validated.data;
