@@ -9,6 +9,6 @@ export type {
   UpdateUserPreferencesInput,
   UserProfile,
 } from './types';
-export { getCurrentUserProfile, updateUserPreferences } from './profiles';
+export { getCurrentUserProfile, updateUserPreferences, updateUserProfile } from './profiles';
 export { listReferenceImages } from './reference-images';
 export { saveContentPack } from './content-packs';

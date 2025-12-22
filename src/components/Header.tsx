@@ -5,30 +5,37 @@ import { Button } from './ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, type ReactNode } from 'react';
-import { useDemoAuth } from '@/context/DemoAuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 function HeaderAuthButtons() {
   const router = useRouter();
-  const { signIn, signOut } = useDemoAuth();
+  const { isSignedIn, isLoading, signOut } = useAuth();
 
   const handleSignIn = useCallback(() => {
-    signIn();
-    router.push('/');
-  }, [router, signIn]);
+    router.push('/login');
+  }, [router]);
 
   const handleSignOut = useCallback(() => {
-    signOut();
-    router.push('/login');
+    void signOut().finally(() => {
+      router.push('/login');
+    });
   }, [router, signOut]);
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={handleSignOut}>
-        Sign out
-      </Button>
-      <Button size="sm" onClick={handleSignIn}>
-        Sign in Demo
-      </Button>
+      {isSignedIn ? (
+        <Button variant="outline" size="sm" onClick={handleSignOut}>
+          Sign out
+        </Button>
+      ) : (
+        <Button size="sm" onClick={handleSignIn}>
+          Sign in
+        </Button>
+      )}
     </div>
   );
 }

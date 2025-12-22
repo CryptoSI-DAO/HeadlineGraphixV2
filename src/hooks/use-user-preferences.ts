@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { UserPreferences } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 type PreferencesResponse = UserPreferences & {
   error?: string;
@@ -13,6 +14,7 @@ const EMPTY_PREFERENCES: UserPreferences = {
 };
 
 export function useUserPreferences() {
+  const { session } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(EMPTY_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +24,14 @@ export function useUserPreferences() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/preferences', { cache: 'no-store' });
+      const response = await fetch('/api/preferences', {
+        cache: 'no-store',
+        headers: session?.access_token
+          ? {
+              Authorization: `Bearer ${session.access_token}`,
+            }
+          : undefined,
+      });
       if (!response.ok) {
         throw new Error('Failed to load preferences');
       }
@@ -38,7 +47,7 @@ export function useUserPreferences() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [session?.access_token]);
 
   useEffect(() => {
     fetchPreferences();
@@ -56,6 +65,9 @@ export function useUserPreferences() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            ...(session?.access_token
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : {}),
           },
           body: JSON.stringify(next),
         });
@@ -80,7 +92,7 @@ export function useUserPreferences() {
         setIsSaving(false);
       }
     },
-    [preferences]
+    [preferences, session?.access_token]
   );
 
   return {

@@ -1,4 +1,4 @@
-import type { ContentModelProvider } from '@/ai/flows/generate-content-drafts';
+import type { ContentModelProvider } from '@/ai/flows/generate-content-drafts/index';
 
 export const isGoogleNewsUrl = (url?: string | null) => {
   if (!url) return false;
@@ -33,12 +33,32 @@ export const estimateForInput = ({
 };
 
 export const getBase64FromUrl = async (url: string): Promise<string> => {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+  console.log('DEBUG: Fetching image from URL:', url);
+  try {
+    const response = await fetch(url);
+    console.log('DEBUG: Response status:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    console.log('DEBUG: Blob size:', blob.size, 'type:', blob.type);
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        console.log('DEBUG: Successfully converted to base64');
+        resolve(reader.result as string);
+      };
+      reader.onerror = (error) => {
+        console.error('DEBUG: FileReader error:', error);
+        reject(error);
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('DEBUG: Error in getBase64FromUrl:', error);
+    throw error;
+  }
 };

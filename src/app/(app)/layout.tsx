@@ -8,8 +8,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="flex flex-col min-h-screen">
-            {children}
+        <div className="flex min-h-svh flex-1 flex-col">
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>

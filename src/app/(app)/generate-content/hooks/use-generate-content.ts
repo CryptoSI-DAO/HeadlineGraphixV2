@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   ContentModelProvider,
   GenerateContentDraftsOutput,
-} from '@/ai/flows/generate-content-drafts';
-import { generateContentDrafts } from '@/ai/flows/generate-content-drafts';
+} from '@/ai/flows/generate-content-drafts/index';
+import { generateContentDrafts } from '@/ai/flows/generate-content-drafts/index';
 import type { useToast } from '@/hooks/use-toast';
 import { estimateForInput, getBase64FromUrl } from '../utils';
 
@@ -75,8 +75,19 @@ export const useGenerateContent = ({
     setGenerationStartedAt(Date.now());
 
     try {
+      console.log('DEBUG: Processing selected images:', selectedImages);
       const imageAsDataUrls = selectedImages.length > 0
-        ? await Promise.all(selectedImages.map(getBase64FromUrl))
+        ? await Promise.all(selectedImages.map(async (url) => {
+            console.log('DEBUG: Converting image to base64:', url);
+            try {
+              const result = await getBase64FromUrl(url);
+              console.log('DEBUG: Successfully converted image to base64');
+              return result;
+            } catch (error) {
+              console.error('DEBUG: Failed to convert image to base64:', error);
+              throw error;
+            }
+          }))
         : [];
 
       setEstimatedSeconds(inputEstimateSeconds);

@@ -11,13 +11,14 @@ import { normalizePreferences, sanitizePreferences } from './dashboard/utils';
 import {
   ContentPreferencesCard,
   CreditBalanceCard,
+  ProfileFieldCard,
   QuickStartCard,
   ReferenceImagePreviewCard,
 } from './dashboard/components';
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const { displayProfile, isLoading: isProfileLoading } = useProfile();
+  const { displayProfile, isLoading: isProfileLoading, updateProfile } = useProfile();
   const {
     preferences,
     isLoading: isPreferencesLoading,
@@ -28,10 +29,19 @@ export default function DashboardPage() {
   const [localPreferences, setLocalPreferences] = useState<UserPreferences>(
     normalizePreferences(preferences)
   );
+  const [nameValue, setNameValue] = useState('');
+  const [emailValue, setEmailValue] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
 
   useEffect(() => {
     setLocalPreferences(normalizePreferences(preferences));
   }, [preferences]);
+
+  useEffect(() => {
+    setNameValue(displayProfile.name ?? '');
+    setEmailValue(displayProfile.email ?? '');
+  }, [displayProfile.email, displayProfile.name]);
 
   const handleSave = async () => {
     try {
@@ -49,6 +59,48 @@ export default function DashboardPage() {
         description: (error as Error).message ?? 'Please try again.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleNameSave = async () => {
+    try {
+      setIsSavingName(true);
+      const updated = await updateProfile({ name: nameValue.trim() });
+      setNameValue(updated.name ?? '');
+      toast({
+        title: 'Name Updated',
+        description: 'Your name has been saved.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to update name',
+        description: (error as Error).message ?? 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handleEmailSave = async () => {
+    try {
+      setIsSavingEmail(true);
+      const updated = await updateProfile({ email: emailValue.trim() });
+      setEmailValue(updated.email ?? '');
+      toast({
+        title: 'Email Updated',
+        description: 'Your email has been saved.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to update email',
+        description: (error as Error).message ?? 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingEmail(false);
     }
   };
 
@@ -77,6 +129,27 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <CreditBalanceCard />
+          <ProfileFieldCard
+            title="Name"
+            label="Profile name"
+            value={nameValue}
+            placeholder="Enter your name"
+            isSaving={isSavingName}
+            isDisabled={isProfileLoading}
+            onChange={setNameValue}
+            onSave={handleNameSave}
+          />
+          <ProfileFieldCard
+            title="Email"
+            label="Account email"
+            value={emailValue}
+            placeholder="Enter your email"
+            inputType="email"
+            isSaving={isSavingEmail}
+            isDisabled={isProfileLoading}
+            onChange={setEmailValue}
+            onSave={handleEmailSave}
+          />
         </div>
 
         <ContentPreferencesCard
