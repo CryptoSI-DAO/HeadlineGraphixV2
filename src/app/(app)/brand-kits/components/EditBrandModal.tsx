@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogClose,
@@ -23,21 +25,51 @@ export const EditBrandModal = ({
   onClose,
   onSave,
   onFieldChange,
+  isSaving = false,
 }: {
   preset: BrandPreset | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (logoFile?: File) => void;
   onFieldChange: (field: keyof BrandPreset, value: string) => void;
+  isSaving?: boolean;
 }) => {
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+
   if (!preset) return null;
 
   const isArtStyleOther = !['Geometric', 'Cartoon', 'Minimalist'].includes(preset.artStyle);
+  const isNewBrand = !preset.id || preset.id.startsWith('empty-');
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    onSave(logoFile || undefined);
+    setLogoFile(null);
+    setLogoPreview('');
+  };
+
+  const handleCancel = () => {
+    setLogoFile(null);
+    setLogoPreview('');
+    onClose();
+  };
 
   return (
-    <Dialog open={!!preset} onOpenChange={onClose}>
+    <Dialog open={!!preset} onOpenChange={handleCancel}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Brand</DialogTitle>
+          <DialogTitle>{isNewBrand ? 'Add New Brand' : 'Edit Brand'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -137,19 +169,52 @@ export const EditBrandModal = ({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="logo-upload" className="text-right">
-              Logo Upload
+              Logo
             </Label>
-            <Input id="logo-upload" type="file" className="col-span-3" />
+            <div className="col-span-3 space-y-2">
+              <Input
+                id="logo-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoChange}
+              />
+              {(logoPreview || preset.logoUrl) && (
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={logoPreview || preset.logoUrl}
+                    alt={preset.logoAlt || 'Logo preview'}
+                    width={40}
+                    height={40}
+                    className="rounded-md bg-muted"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {logoFile ? logoFile.name : 'Current logo'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="logo-alt" className="text-right">
+              Logo Alt Text
+            </Label>
+            <Input
+              id="logo-alt"
+              value={preset.logoAlt}
+              onChange={e => onFieldChange('logoAlt', e.target.value)}
+              className="col-span-3"
+              placeholder="Brand logo"
+            />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" onClick={onSave}>
-            Save Changes
+          <Button type="submit" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>

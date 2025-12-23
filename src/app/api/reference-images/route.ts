@@ -1,17 +1,50 @@
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { DEMO_USER_ID, listReferenceImages } from '@/lib/data';
+import { listReferenceImages } from '@/lib/data';
 import type { ReferenceImageMeta } from '@/lib/data';
 import { getAdminClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
+import {
+  ALLOWED_REFERENCE_IMAGE_TYPES,
+  MAX_REFERENCE_IMAGES,
+  MAX_REFERENCE_IMAGE_SIZE_BYTES,
+} from '@/lib/reference-images';
 
 const BUCKET_ID = 'reference-images';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+async function getUserIdFromRequest(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader) {
+    return null;
+  }
+
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL || '', env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return null;
+  }
+  return user.id;
+}
+
+export async function GET(request: Request) {
   try {
-    const images = await listReferenceImages();
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const images = await listReferenceImages(userId);
     return NextResponse.json({ images });
   } catch (error) {
     console.error('Failed to list reference images', error);
@@ -21,6 +54,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
     const description = (formData.get('description') as string | null) ?? undefined;
@@ -29,12 +67,32 @@ export async function POST(request: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'A file is required.' }, { status: 400 });
     }
+    if (!ALLOWED_REFERENCE_IMAGE_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: 'Unsupported image type.' }, { status: 400 });
+    }
+    if (file.size > MAX_REFERENCE_IMAGE_SIZE_BYTES) {
+      return NextResponse.json({ error: 'File is too large.' }, { status: 400 });
+    }
 
     const sanitizedName = file.name ? file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_') : 'upload.jpg';
-    const storagePath = `${DEMO_USER_ID}/${Date.now()}-${randomUUID()}-${sanitizedName}`;
+    const storagePath = `${userId}/${Date.now()}-${randomUUID()}-${sanitizedName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const supabase = getAdminClient();
+    const { count, error: countError } = await supabase
+      .from('reference_images')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) {
+      console.error('Failed to count reference images', countError);
+      return NextResponse.json({ error: 'Unable to validate upload limits' }, { status: 500 });
+    }
+
+    if ((count ?? 0) >= MAX_REFERENCE_IMAGES) {
+      return NextResponse.json({ error: 'Image limit reached.' }, { status: 400 });
+    }
+
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_ID)
       .upload(storagePath, buffer, {
@@ -52,7 +110,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from('reference_images')
       .insert({
-        user_id: DEMO_USER_ID,
+        user_id: userId,
         storage_path: storagePath,
         image_url: publicUrl.publicUrl,
         description: description ?? sanitizedName,

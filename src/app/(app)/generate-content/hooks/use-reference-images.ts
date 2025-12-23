@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import type { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const mapArchiveImage = (image: any): ImagePlaceholder => ({
   id: image.id,
@@ -16,6 +17,7 @@ export const useReferenceImages = ({
   initialReferenceImages: ImagePlaceholder[];
   toast: ReturnType<typeof useToast>['toast'];
 }) => {
+  const { session } = useAuth();
   const [referenceImages, setReferenceImages] = useState(initialReferenceImages);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isLoadingArchiveImages, setIsLoadingArchiveImages] = useState(false);
@@ -29,7 +31,13 @@ export const useReferenceImages = ({
   const fetchArchiveImages = async () => {
     setIsLoadingArchiveImages(true);
     try {
-      const response = await fetch('/api/reference-images');
+      const response = await fetch('/api/reference-images', {
+        headers: session?.access_token
+          ? {
+              Authorization: `Bearer ${session.access_token}`,
+            }
+          : undefined,
+      });
       if (!response.ok) {
         throw new Error('Unable to load reference images.');
       }

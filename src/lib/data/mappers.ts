@@ -1,4 +1,4 @@
-import type { ReferenceImageMeta, UserProfile } from './types';
+import type { ReferenceImageMeta, UserProfile, BrandKit } from './types';
 
 export function mapProfile(row: any): UserProfile {
   return {
@@ -25,5 +25,23 @@ export function mapReferenceImage(row: any): ReferenceImageMeta {
     description: row.description ?? undefined,
     aiHint: row.ai_hint ?? undefined,
     createdAt: row.created_at,
+  };
+}
+
+export function mapBrandKit(row: any): BrandKit {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    primaryColor: row.primary_color,
+    secondaryColor: row.secondary_color,
+    trimColor: row.trim_color,
+    font: row.font,
+    artStyle: row.art_style,
+    logoStoragePath: row.logo_storage_path ?? undefined,
+    logoUrl: row.logo_url ?? undefined,
+    logoAlt: row.logo_alt ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }

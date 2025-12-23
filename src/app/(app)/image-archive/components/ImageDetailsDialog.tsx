@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,19 +12,27 @@ import type { ImagePlaceholder } from '@/lib/placeholder-images';
 export const ImageDetailsDialog = ({
   image,
   onClose,
+  onDownloadClick,
 }: {
   image: ImagePlaceholder | null;
   onClose: () => void;
+  onDownloadClick: (image: ImagePlaceholder) => void;
 }) => (
   <Dialog open={!!image} onOpenChange={open => !open && onClose()}>
     <DialogContent className="max-w-2xl">
-      <DialogHeader>
+      <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <DialogTitle>Image Details</DialogTitle>
+        {image && (
+          <Button variant="outline" size="sm" onClick={() => onDownloadClick(image)}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        )}
       </DialogHeader>
       {image && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="relative aspect-square rounded-lg overflow-hidden border">
-            <Image src={image.imageUrl} alt={image.description} fill className="object-cover" />
+            <Image src={image.imageUrl} alt={image.description} fill unoptimized className="object-cover" />
           </div>
           <div className="space-y-4">
             <div>
@@ -45,7 +55,7 @@ export const ImageDetailsDialog = ({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">AI Hint:</span>
                 <span className="font-mono bg-muted px-2 py-1 rounded-md">
-                  {image.aiHint ?? '—'}
+                  {(image as any).aiHint ?? '—'}
                 </span>
               </div>
             </div>

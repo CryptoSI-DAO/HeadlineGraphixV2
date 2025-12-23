@@ -6,6 +6,7 @@ export const TABLES = {
   hgprofiles: 'hgprofiles',
   referenceImages: 'reference_images',
   contentPacks: 'content_packs',
+  brandKits: 'brand_kits',
 } as const;
 
 export const supabase = getAdminClient();

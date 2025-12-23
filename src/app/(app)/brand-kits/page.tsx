@@ -3,16 +3,29 @@
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
-import type { BrandPreset } from './types';
-import { mockBrandPresets } from './mock-data';
+import { useBrandKits, type BrandPreset } from '@/hooks/use-brand-kits';
 import { BrandPresetsTable, EditBrandModal } from './components';
 
 export default function BrandKitsPage() {
-  const [allPresets, setAllPresets] = useState(mockBrandPresets);
+  const { presets, isLoading, isSaving, saveBrand, deleteBrand } = useBrandKits();
   const [editingPreset, setEditingPreset] = useState<BrandPreset | null>(null);
 
   const handleEditClick = (preset: BrandPreset) => {
     setEditingPreset({ ...preset });
+  };
+
+  const handleAddNew = () => {
+    setEditingPreset({
+      id: '',
+      name: '',
+      primaryColor: '',
+      secondaryColor: '',
+      trimColor: '',
+      font: '',
+      artStyle: '',
+      logoUrl: '',
+      logoAlt: '',
+    });
   };
 
   const handleCloseModal = () => {
@@ -25,19 +38,29 @@ export default function BrandKitsPage() {
     }
   };
 
-  const handleSavePreset = () => {
+  const handleSavePreset = async (logoFile?: File) => {
     if (editingPreset) {
-      setAllPresets(
-        allPresets.map(preset => (preset.id === editingPreset.id ? editingPreset : preset))
-      );
-      setEditingPreset(null);
+      try {
+        await saveBrand(editingPreset, logoFile);
+        setEditingPreset(null);
+      } catch (error) {
+        // Error is handled by the hook
+      }
     }
   };
 
-  const presets = [...allPresets];
-  while (presets.length < 10) {
-    presets.push({
-      id: `empty-${presets.length}`,
+  const handleDeletePreset = async (id: string) => {
+    try {
+      await deleteBrand(id);
+    } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
+  const displayPresets = [...presets];
+  while (displayPresets.length < 10) {
+    displayPresets.push({
+      id: `empty-${displayPresets.length}`,
       name: '',
       primaryColor: '',
       secondaryColor: '',
@@ -52,10 +75,17 @@ export default function BrandKitsPage() {
   return (
     <>
       <Header title="Brand Presets">
-        <Button>Add New Brand</Button>
+        <Button onClick={handleAddNew} disabled={isLoading || isSaving}>
+          Add New Brand
+        </Button>
       </Header>
       <main className="flex-1 p-4 md:p-6">
-        <BrandPresetsTable presets={presets} onEdit={handleEditClick} />
+        <BrandPresetsTable
+          presets={displayPresets}
+          onEdit={handleEditClick}
+          onDelete={handleDeletePreset}
+          isLoading={isLoading}
+        />
       </main>
 
       <EditBrandModal
@@ -63,6 +93,7 @@ export default function BrandKitsPage() {
         onClose={handleCloseModal}
         onSave={handleSavePreset}
         onFieldChange={handleFieldChange}
+        isSaving={isSaving}
       />
     </>
   );

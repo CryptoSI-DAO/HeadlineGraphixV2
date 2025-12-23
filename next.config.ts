@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // Avoid eval-based source maps which can choke on edge-case characters.
+      config.devtool = 'source-map';
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {
@@ -32,7 +39,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'supabase.cryptosi.org',
         port: '',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/**',
       },
     ],
   },

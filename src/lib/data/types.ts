@@ -6,6 +6,22 @@ export type BrandPreset = {
   logoUrl?: string;
 };
 
+export type BrandKit = {
+  id: string;
+  userId: string;
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+  trimColor: string;
+  font: string;
+  artStyle: string;
+  logoStoragePath?: string;
+  logoUrl?: string;
+  logoAlt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ReferenceImageMeta = {
   id: string;
   storagePath: string;

@@ -14,8 +14,9 @@ import {
   UploadImageDialog,
 } from './components';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
+import { MAX_REFERENCE_IMAGES } from '@/lib/reference-images';
 
-const TOTAL_SLOTS = 10;
+const TOTAL_SLOTS = MAX_REFERENCE_IMAGES;
 
 export default function ImageArchivePage() {
   const { toast } = useToast();
@@ -49,7 +50,14 @@ export default function ImageArchivePage() {
   };
 
   const slots = Array.from({ length: TOTAL_SLOTS }).map((_, index) => {
-    return referenceImages[index] || null;
+    const image = referenceImages[index];
+    if (!image) return null;
+    return {
+      id: image.id,
+      description: image.description || '',
+      imageUrl: image.imageUrl,
+      imageHint: image.aiHint || '',
+    } as ImagePlaceholder;
   });
 
   const handleUploadSelected = async () => {
@@ -78,6 +86,56 @@ export default function ImageArchivePage() {
     setResetSignal(prev => prev + 1);
   };
 
+  const handleDownload = async (image: ImagePlaceholder) => {
+    try {
+    const response = await fetch(image.imageUrl);
+    if (!response.ok) {
+      throw new Error('Failed to download image');
+    }
+    const blob = await response.blob();
+    
+    // Generate filename from description or use ID as fallback
+    const description = image.description || image.id;
+    const sanitizedDescription = description
+      .toLowerCase()
+      .replace(/[^a-z0-9\s.-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+    
+    // Check if description already has a file extension
+    const hasExtension = /\.[a-z0-9]+$/i.test(sanitizedDescription);
+    let filename: string;
+    
+    if (hasExtension) {
+      // Use the existing extension from the description
+      filename = sanitizedDescription;
+    } else {
+      // Try to determine file extension from content type
+      const contentType = blob.type || 'image/jpeg';
+      const extension = contentType.split('/')[1] || 'jpg';
+      filename = `${sanitizedDescription}.${extension}`;
+    }
+    
+    // Create download link and trigger download
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({ title: 'Image downloaded' });
+    } catch (error) {
+    toast({
+      title: 'Download failed',
+      description: (error as Error).message ?? 'Please try again.',
+      variant: 'destructive',
+    });
+    }
+  };
+
   return (
     <>
       <Header title="Image Archive">
@@ -91,6 +149,7 @@ export default function ImageArchivePage() {
           isLoading={isLoading}
           onUploadClick={() => setIsUploadModalOpen(true)}
           onInfoClick={setImageToView}
+          onDownloadClick={handleDownload}
           onDeleteClick={setImageToDelete}
         />
       </main>
@@ -101,7 +160,11 @@ export default function ImageArchivePage() {
         onConfirm={handleConfirmDelete}
       />
 
-      <ImageDetailsDialog image={imageToView} onClose={() => setImageToView(null)} />
+      <ImageDetailsDialog
+        image={imageToView}
+        onClose={() => setImageToView(null)}
+        onDownloadClick={handleDownload}
+      />
 
       <UploadImageDialog
         isOpen={isUploadModalOpen}

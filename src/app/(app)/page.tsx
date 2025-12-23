@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import type { UserPreferences } from '@/lib/types';
 import { useProfile } from '@/hooks/use-profile';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
 import { useReferenceImages } from '@/hooks/use-reference-images';
+import { useAuth } from '@/context/AuthContext';
 import { normalizePreferences, sanitizePreferences } from './dashboard/utils';
 import {
   ContentPreferencesCard,
@@ -17,6 +19,8 @@ import {
 } from './dashboard/components';
 
 export default function DashboardPage() {
+  const { isSignedIn, isLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const { displayProfile, isLoading: isProfileLoading, updateProfile } = useProfile();
   const {
@@ -42,6 +46,15 @@ export default function DashboardPage() {
     setNameValue(displayProfile.name ?? '');
     setEmailValue(displayProfile.email ?? '');
   }, [displayProfile.email, displayProfile.name]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    if (!isSignedIn) {
+      router.replace('/login');
+    }
+  }, [isLoading, isSignedIn, router]);
 
   const handleSave = async () => {
     try {
@@ -118,6 +131,18 @@ export default function DashboardPage() {
 
   const { images: referenceImages, isLoading: isReferenceImagesLoading } = useReferenceImages();
   const imagePreviews = referenceImages.slice(0, 4);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return null;
+  }
 
   return (
     <>

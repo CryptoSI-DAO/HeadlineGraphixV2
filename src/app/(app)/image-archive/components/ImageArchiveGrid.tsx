@@ -8,12 +8,14 @@ export const ImageArchiveGrid = ({
   isLoading,
   onUploadClick,
   onInfoClick,
+  onDownloadClick,
   onDeleteClick,
 }: {
   slots: (ImagePlaceholder | null)[];
   isLoading: boolean;
   onUploadClick: () => void;
   onInfoClick: (image: ImagePlaceholder) => void;
+  onDownloadClick: (image: ImagePlaceholder) => void;
   onDeleteClick: (image: ImagePlaceholder) => void;
 }) => (
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -32,8 +34,9 @@ export const ImageArchiveGrid = ({
               src={image.imageUrl}
               alt={image.description}
               fill
+              unoptimized
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              data-ai-hint={image.aiHint}
+              data-ai-hint={(image as any).aiHint || image.imageHint}
             />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
@@ -48,6 +51,7 @@ export const ImageArchiveGrid = ({
                 variant="ghost"
                 size="icon"
                 className="text-white hover:bg-white/20 hover:text-white"
+                onClick={() => onDownloadClick(image)}
               >
                 <Download className="h-5 w-5" />
               </Button>
