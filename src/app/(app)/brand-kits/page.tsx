@@ -33,9 +33,10 @@ export default function BrandKitsPage() {
   };
 
   const handleFieldChange = (field: keyof BrandPreset, value: string) => {
-    if (editingPreset) {
-      setEditingPreset({ ...editingPreset, [field]: value });
-    }
+    setEditingPreset((current) => {
+      if (!current) return current;
+      return { ...current, [field]: value };
+    });
   };
 
   const handleSavePreset = async (logoFile?: File) => {

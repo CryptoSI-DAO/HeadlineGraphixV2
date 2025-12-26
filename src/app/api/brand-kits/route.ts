@@ -94,7 +94,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unsupported image type. Use JPEG, PNG, or WebP.' }, { status: 400 });
       }
       if (logoFile.size > MAX_LOGO_SIZE_BYTES) {
-        return NextResponse.json({ error: 'Logo must be 2MB or smaller.' }, { status: 400 });
+        const maxSizeMb = Math.max(1, Math.round(MAX_LOGO_SIZE_BYTES / (1024 * 1024)));
+        return NextResponse.json({ error: `Logo must be ${maxSizeMb}MB or smaller.` }, { status: 400 });
       }
 
       const sanitizedName = logoFile.name ? logoFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_') : 'logo.jpg';
@@ -110,7 +111,8 @@ export async function POST(request: Request) {
 
       if (uploadError) {
         console.error('Failed to upload logo to storage', uploadError);
-        return NextResponse.json({ error: 'Unable to upload logo' }, { status: 500 });
+        const message = uploadError.message || 'Unable to upload logo';
+        return NextResponse.json({ error: message }, { status: 500 });
       }
 
       const { data: publicUrl } = supabase.storage.from(BUCKET_ID).getPublicUrl(logoStoragePath);

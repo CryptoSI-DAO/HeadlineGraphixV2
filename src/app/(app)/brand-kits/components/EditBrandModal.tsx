@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { BrandPreset } from '../types';
+import { useAuth } from '@/context/AuthContext';
 
 export const EditBrandModal = ({
   preset,
@@ -35,6 +36,9 @@ export const EditBrandModal = ({
 }) => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const { session } = useAuth();
 
   if (!preset) return null;
 
@@ -45,6 +49,7 @@ export const EditBrandModal = ({
     const file = e.target.files?.[0];
     if (file) {
       setLogoFile(file);
+      setScanError(null);
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
@@ -59,9 +64,82 @@ export const EditBrandModal = ({
     setLogoPreview('');
   };
 
+  const handleScanLogo = async () => {
+    if (!logoFile) {
+      setScanError('Upload a logo before scanning.');
+      return;
+    }
+    if (!session?.access_token) {
+      setScanError('Sign in to scan a logo.');
+      return;
+    }
+
+    setIsScanning(true);
+    setScanError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('logo', logoFile);
+
+      const response = await fetch('/api/brand-kits/scan-logo', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let message = 'Logo scan failed.';
+        try {
+          const payload = (await response.json()) as { error?: string };
+          if (payload?.error) {
+            message = payload.error;
+          }
+        } catch (parseError) {
+          console.warn('Unable to parse scan response', parseError);
+        }
+        throw new Error(message);
+      }
+
+      const payload = (await response.json()) as {
+        result?: {
+          brandName: string;
+          primaryColor: string;
+          secondaryColor: string;
+          trimColor: string;
+          font: string;
+          artStyle: string;
+        };
+      };
+
+      if (!payload?.result) {
+        throw new Error('Logo scan returned no results.');
+      }
+
+      if (isNewBrand || !preset.name) {
+        onFieldChange('name', payload.result.brandName);
+        if (!preset.logoAlt) {
+          onFieldChange('logoAlt', `${payload.result.brandName} logo`);
+        }
+      }
+      onFieldChange('primaryColor', payload.result.primaryColor);
+      onFieldChange('secondaryColor', payload.result.secondaryColor);
+      onFieldChange('trimColor', payload.result.trimColor);
+      onFieldChange('font', payload.result.font);
+      onFieldChange('artStyle', payload.result.artStyle);
+    } catch (error) {
+      console.error('Logo scan failed', error);
+      setScanError((error as Error).message);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const handleCancel = () => {
     setLogoFile(null);
     setLogoPreview('');
+    setScanError(null);
     onClose();
   };
 
@@ -73,13 +151,71 @@ export const EditBrandModal = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="logo-upload" className="text-right">
+              Logo
+            </Label>
+            <div className="col-span-3 space-y-2">
+              <Input
+                id="logo-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoChange}
+              />
+              {isNewBrand && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleScanLogo}
+                    disabled={isScanning || !logoFile}
+                  >
+                    {isScanning ? 'Scanning...' : 'Scan Logo'}
+                  </Button>
+                  {scanError && <span className="text-sm text-destructive">{scanError}</span>}
+                </div>
+              )}
+              {(logoPreview || preset.logoUrl) && (
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={logoPreview || preset.logoUrl}
+                    alt={preset.logoAlt || 'Logo preview'}
+                    width={40}
+                    height={40}
+                    className="rounded-md bg-muted"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {logoFile ? logoFile.name : 'Current logo'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="logo-alt" className="text-right">
+              Logo Alt Text
+            </Label>
+            <Input
+              id="logo-alt"
+              value={preset.logoAlt}
+              onChange={e => onFieldChange('logoAlt', e.target.value)}
+              className="col-span-3"
+              placeholder="Brand logo"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="brand-name" className="text-right">
               Brand Name
             </Label>
             <Input
               id="brand-name"
               value={preset.name}
-              onChange={e => onFieldChange('name', e.target.value)}
+              onChange={e => {
+                const nextName = e.target.value;
+                onFieldChange('name', nextName);
+                if (!preset.logoAlt) {
+                  onFieldChange('logoAlt', nextName ? `${nextName} logo` : '');
+                }
+              }}
               className="col-span-3"
             />
           </div>
@@ -166,45 +302,6 @@ export const EditBrandModal = ({
                 />
               )}
             </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="logo-upload" className="text-right">
-              Logo
-            </Label>
-            <div className="col-span-3 space-y-2">
-              <Input
-                id="logo-upload"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleLogoChange}
-              />
-              {(logoPreview || preset.logoUrl) && (
-                <div className="flex items-center gap-2">
-                  <Image
-                    src={logoPreview || preset.logoUrl}
-                    alt={preset.logoAlt || 'Logo preview'}
-                    width={40}
-                    height={40}
-                    className="rounded-md bg-muted"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {logoFile ? logoFile.name : 'Current logo'}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="logo-alt" className="text-right">
-              Logo Alt Text
-            </Label>
-            <Input
-              id="logo-alt"
-              value={preset.logoAlt}
-              onChange={e => onFieldChange('logoAlt', e.target.value)}
-              className="col-span-3"
-              placeholder="Brand logo"
-            />
           </div>
         </div>
         <DialogFooter>
