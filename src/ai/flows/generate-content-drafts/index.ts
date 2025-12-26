@@ -12,7 +12,7 @@ import type {
   GenerateContentDraftsInput,
   GenerateContentDraftsOutput,
 } from './schemas';
-import { GenerateContentDraftsInputSchema, MODEL_PROVIDERS } from './schemas';
+import { GenerateContentDraftsInputSchema } from './schemas';
 import { buildModelPrompt } from './prompt';
 import { maybeExpandArticleContent } from './article';
 import { requestOpenRouterCompletion } from './openrouter';
@@ -61,5 +61,3 @@ async function generateContentDraftsWithGlm(
   console.info('GLM generation completed', { elapsedMs });
   return ensureInfographicUrl(parsed, input.headline, { requireImagen: false });
 }
-
-export { MODEL_PROVIDERS };

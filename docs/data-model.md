@@ -55,6 +55,9 @@ Although the profile JSON stores a quick cache for rendering, every uploaded ima
 | `user_id` | `uuid` | FK → `hgprofiles.id`. |
 | `headline_id` | `text` | Headline slug or external id. |
 | `headline` | `text` | Snapshot of the source headline. |
+| `reference_image_id` | `uuid` | FK → `reference_images.id`, nullable. |
+| `reference_image_url` | `text` | Cached URL while the image remains in the archive. |
+| `reference_image_removed_at` | `timestamptz` | Timestamp set when the archive image is deleted. |
 | `config` | `jsonb` | Input configuration `{ brandTone, referenceImage, userAngle, backlinks[] }`. |
 | `drafts` | `jsonb` | Draft payload `{ blogPost, linkedInPost, infographicUrl }`. |
 | `generated_at` | `timestamptz` | When the AI job finished. |

@@ -6,7 +6,6 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Sparkles } from 'lucide-react';
 import { ArticleInputs } from './ArticleInputs';
 import { ReferenceImagesPicker } from './ReferenceImagesPicker';
-import { brandTones } from '../constants';
 
 export const GenerateContentInputs = ({
   headline,
@@ -23,6 +22,8 @@ export const GenerateContentInputs = ({
   showUrlOverride,
   brandTone,
   setBrandTone,
+  brandOptions,
+  isLoadingBrands,
   referenceImages,
   selectedImages,
   toggleReferenceImage,
@@ -50,6 +51,8 @@ export const GenerateContentInputs = ({
   showUrlOverride: boolean;
   brandTone: string;
   setBrandTone: (value: string) => void;
+  brandOptions: string[];
+  isLoadingBrands: boolean;
   referenceImages: { id: string; imageUrl: string; description: string; imageHint: string }[];
   selectedImages: string[];
   toggleReferenceImage: (url: string) => void;
@@ -88,7 +91,17 @@ export const GenerateContentInputs = ({
           <SelectValue placeholder="Select a preset" />
         </SelectTrigger>
         <SelectContent>
-          {brandTones.map(tone => (
+          {isLoadingBrands && (
+            <SelectItem value="loading" disabled>
+              Loading brand kits...
+            </SelectItem>
+          )}
+          {!isLoadingBrands && brandOptions.length === 0 && (
+            <SelectItem value="empty" disabled>
+              No brand kits yet
+            </SelectItem>
+          )}
+          {brandOptions.map((tone) => (
             <SelectItem key={tone} value={tone}>
               {tone}
             </SelectItem>

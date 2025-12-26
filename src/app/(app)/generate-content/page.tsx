@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { CheckCircle } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { useBrandKits } from '@/hooks/use-brand-kits';
 import type { ContentModelProvider } from '@/ai/flows/generate-content-drafts';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { brandTones, modelOptions } from './constants';
@@ -14,7 +15,7 @@ import { GenerateContentLayout } from './components';
 import { useArticleContent, useGenerateContent, useReferenceImages } from './hooks';
 
 export default function GenerateContentPage() {
-  const { addHistoryItem, preferences } = useAppContext();
+  const { addHistoryItem, preferences, history } = useAppContext();
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -27,6 +28,7 @@ export default function GenerateContentPage() {
     prefilledHeadline ?? 'AI-Powered Content Generation'
   );
   const [useFullArticle, setUseFullArticle] = useState<'yes' | 'no'>('no');
+  const { presets: brandPresets, isLoading: isLoadingBrands } = useBrandKits();
   const [brandTone, setBrandTone] = useState(brandTones[0]);
   const [articleUrlOverride, setArticleUrlOverride] = useState('');
   const [userAngle, setUserAngle] = useState(prefilledSummary ?? '');
@@ -48,6 +50,16 @@ export default function GenerateContentPage() {
       setUserAngle('');
     }
   }, [prefilledSummary]);
+
+  useEffect(() => {
+    if (brandPresets.length === 0) {
+      return;
+    }
+    const presetNames = brandPresets.map((preset) => preset.name);
+    if (!presetNames.includes(brandTone)) {
+      setBrandTone(presetNames[0]);
+    }
+  }, [brandPresets, brandTone]);
 
   const { articleContent, isFetchingArticle, resolvedArticleUrl } = useArticleContent({
     prefilledSummary,
@@ -91,19 +103,30 @@ export default function GenerateContentPage() {
   const activeModelLabel =
     modelOptions.find(option => option.value === modelProvider)?.label ?? 'Model';
 
-  const handleSave = (slot: number) => {
+  const brandOptions = brandPresets.length > 0 ? brandPresets.map((preset) => preset.name) : brandTones;
+  const filledSlots = Array.from({ length: 10 }).map((_, index) => Boolean(history[index]));
+
+  const handleSave = async (slot: number) => {
     if (!drafts) return;
-    addHistoryItem({
+    const saved = await addHistoryItem({
       headline,
       config: { brandTone, referenceImage: selectedImages[0] ?? '', userAngle },
       drafts,
     });
-    toast({
-      title: 'Saved to Content Library',
-      description: `Your content pack has been successfully saved to slot #${slot}.`,
-      action: <CheckCircle />,
-    });
-    setIsSaveModalOpen(false);
+    if (saved) {
+      toast({
+        title: 'Saved to Content Library',
+        description: `Your content pack has been successfully saved to slot #${slot}.`,
+        action: <CheckCircle />,
+      });
+      setIsSaveModalOpen(false);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Please sign in to save content packs.',
+      });
+    }
   };
 
   const handleCopy = () => {
@@ -133,6 +156,8 @@ export default function GenerateContentPage() {
         showUrlOverride={Boolean(prefilledUrl && isGoogleNewsUrl(prefilledUrl))}
         brandTone={brandTone}
         setBrandTone={setBrandTone}
+        brandOptions={brandOptions}
+        isLoadingBrands={isLoadingBrands}
         referenceImages={referenceImages}
         selectedImages={selectedImages}
         toggleReferenceImage={toggleReferenceImage}
@@ -154,6 +179,7 @@ export default function GenerateContentPage() {
         isSaveModalOpen={isSaveModalOpen}
         setIsSaveModalOpen={setIsSaveModalOpen}
         handleSave={handleSave}
+        filledSlots={filledSlots}
         modelProvider={modelProvider}
         setModelProvider={setModelProvider}
         estimatedSeconds={estimatedSeconds}

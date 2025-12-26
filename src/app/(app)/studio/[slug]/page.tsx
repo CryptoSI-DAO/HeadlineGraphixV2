@@ -71,17 +71,25 @@ export default function StudioPage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!drafts || !headline) return;
-    addHistoryItem({
+    const saved = await addHistoryItem({
       headline: headline.title,
       config: { brandTone, referenceImage: selectedImage, userAngle },
       drafts,
     });
-    toast({
-      title: 'Saved to History',
-      description: 'Your content pack has been successfully saved.',
-    });
+    if (saved) {
+      toast({
+        title: 'Saved to History',
+        description: 'Your content pack has been successfully saved.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Please sign in to save content packs.',
+      });
+    }
   };
 
   if (!headline) {

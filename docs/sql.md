@@ -57,6 +57,9 @@ create table if not exists public.content_packs (
   user_id uuid not null references public.hgprofiles(id) on delete cascade,
   headline_id text,
   headline text not null,
+  reference_image_id uuid references public.reference_images(id) on delete set null,
+  reference_image_url text,
+  reference_image_removed_at timestamptz,
   config jsonb not null default '{}'::jsonb,
   drafts jsonb not null default '{}'::jsonb,
   generated_at timestamptz not null default timezone('utc', now())
@@ -64,6 +67,47 @@ create table if not exists public.content_packs (
 
 create index if not exists content_packs_user_idx on public.content_packs(user_id);
 create index if not exists content_packs_headline_idx on public.content_packs(headline_id);
+create index if not exists content_packs_reference_image_idx on public.content_packs(reference_image_id);
+
+create or replace function public.sync_content_pack_reference_image()
+returns trigger as $$
+begin
+  if new.reference_image_id is null then
+    new.reference_image_url = null;
+    return new;
+  end if;
+
+  select image_url
+    into new.reference_image_url
+  from public.reference_images
+  where id = new.reference_image_id;
+
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists content_packs_reference_image_sync on public.content_packs;
+create trigger content_packs_reference_image_sync
+before insert or update of reference_image_id on public.content_packs
+for each row execute function public.sync_content_pack_reference_image();
+
+create or replace function public.handle_reference_image_deleted()
+returns trigger as $$
+begin
+  update public.content_packs
+    set reference_image_id = null,
+        reference_image_url = null,
+        reference_image_removed_at = timezone('utc', now())
+  where reference_image_id = old.id;
+
+  return old;
+end;
+$$ language plpgsql;
+
+drop trigger if exists reference_images_cleanup on public.reference_images;
+create trigger reference_images_cleanup
+before delete on public.reference_images
+for each row execute function public.handle_reference_image_deleted();
 
 -- Row Level Security -----------------------------------------------------
 alter table public.hgprofiles enable row level security;

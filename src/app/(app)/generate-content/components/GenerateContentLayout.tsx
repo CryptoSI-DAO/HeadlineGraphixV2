@@ -21,6 +21,8 @@ export const GenerateContentLayout = ({
   showUrlOverride,
   brandTone,
   setBrandTone,
+  brandOptions,
+  isLoadingBrands,
   referenceImages,
   selectedImages,
   toggleReferenceImage,
@@ -42,6 +44,7 @@ export const GenerateContentLayout = ({
   isSaveModalOpen,
   setIsSaveModalOpen,
   handleSave,
+  filledSlots,
   modelProvider,
   setModelProvider,
   estimatedSeconds,
@@ -60,6 +63,8 @@ export const GenerateContentLayout = ({
   showUrlOverride: boolean;
   brandTone: string;
   setBrandTone: (value: string) => void;
+  brandOptions: string[];
+  isLoadingBrands: boolean;
   referenceImages: { id: string; imageUrl: string; description: string; imageHint: string }[];
   selectedImages: string[];
   toggleReferenceImage: (url: string) => void;
@@ -81,6 +86,7 @@ export const GenerateContentLayout = ({
   isSaveModalOpen: boolean;
   setIsSaveModalOpen: (value: boolean) => void;
   handleSave: (slot: number) => void;
+  filledSlots: boolean[];
   modelProvider: ContentModelProvider;
   setModelProvider: (value: ContentModelProvider) => void;
   estimatedSeconds: number | null;
@@ -106,6 +112,8 @@ export const GenerateContentLayout = ({
         showUrlOverride={showUrlOverride}
         brandTone={brandTone}
         setBrandTone={setBrandTone}
+        brandOptions={brandOptions}
+        isLoadingBrands={isLoadingBrands}
         referenceImages={referenceImages}
         selectedImages={selectedImages}
         toggleReferenceImage={toggleReferenceImage}
@@ -134,6 +142,11 @@ export const GenerateContentLayout = ({
       />
     </div>
 
-    <SaveDialog isOpen={isSaveModalOpen} onOpenChange={setIsSaveModalOpen} onSave={handleSave} />
+    <SaveDialog
+      isOpen={isSaveModalOpen}
+      onOpenChange={setIsSaveModalOpen}
+      onSave={handleSave}
+      filledSlots={filledSlots}
+    />
   </main>
 );

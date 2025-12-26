@@ -58,9 +58,9 @@ export default function ContentLibraryPage() {
     setItemToDelete(item);
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (itemToDelete) {
-      deleteHistoryItem(itemToDelete.id);
+      await deleteHistoryItem(itemToDelete.id);
       setItemToDelete(null);
     }
   }
@@ -156,18 +156,12 @@ export default function ContentLibraryPage() {
                 <TabsList>
                   <TabsTrigger value="blog">Blog Post</TabsTrigger>
                   <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-                  <TabsTrigger value="infographic">Infographic</TabsTrigger>
                 </TabsList>
                 <TabsContent value="blog" className="mt-4 max-h-[50vh] overflow-y-auto bg-muted p-4 rounded-md text-sm">
                     <pre className="whitespace-pre-wrap font-sans">{selectedItem.drafts.blogPost}</pre>
                 </TabsContent>
                 <TabsContent value="linkedin" className="mt-4 max-h-[50vh] overflow-y-auto bg-muted p-4 rounded-md text-sm">
                     <pre className="whitespace-pre-wrap font-sans">{selectedItem.drafts.linkedInPost}</pre>
-                </TabsContent>
-                <TabsContent value="infographic" className="mt-4 flex justify-center">
-                    <div className="relative aspect-[2/3] w-full max-w-xs rounded-lg overflow-hidden border">
-                        <Image src={selectedItem.drafts.infographic} alt="Generated Infographic" fill className="object-cover" />
-                    </div>
                 </TabsContent>
               </Tabs>
           )}
