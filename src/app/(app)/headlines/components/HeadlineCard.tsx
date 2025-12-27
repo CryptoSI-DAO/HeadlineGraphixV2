@@ -47,7 +47,11 @@ export const HeadlineCard = ({ headline }: { headline: Headline }) => (
         </Link>
       </Button>
       <Button asChild variant="secondary">
-        <Link href="/generate-image">
+        <Link
+          href={`/generate-image?headline=${encodeURIComponent(headline.title)}&context=${encodeURIComponent(
+            headline.content ?? ''
+          )}`}
+        >
           <ImageIcon /> Generate Image
         </Link>
       </Button>

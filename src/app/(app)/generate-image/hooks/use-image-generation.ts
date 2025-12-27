@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import type { GenerateImageOutput } from '@/ai/flows/generate-image';
-import { generateImage } from '@/ai/flows/generate-image';
 import type { useToast } from '@/hooks/use-toast';
 
 export const useImageGeneration = ({
@@ -9,22 +7,22 @@ export const useImageGeneration = ({
   toast: ReturnType<typeof useToast>['toast'];
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<GenerateImageOutput | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<{ imageUrl: string } | null>(null);
 
   const handleGenerate = async ({
-    headline,
-    content,
-    brand,
+    prompt,
+    size,
+    referenceImages,
   }: {
-    headline: string;
-    content: string;
-    brand: string;
+    prompt: string;
+    size?: string;
+    referenceImages?: string[];
   }) => {
-    if (!headline) {
+    if (!prompt) {
       toast({
         variant: 'destructive',
-        title: 'Headline is required',
-        description: 'Please enter a headline to generate an image.',
+        title: 'Prompt is required',
+        description: 'Please provide a prompt to generate an image.',
       });
       return;
     }
@@ -32,10 +30,23 @@ export const useImageGeneration = ({
     setGeneratedImage(null);
 
     try {
-      const result = await generateImage({
-        prompt: `${headline}\n\n${content}`,
-        brand,
+      const response = await fetch('/api/glm-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt, size, referenceImages }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error ?? 'Failed to generate image.');
+      }
+
+      const result = (await response.json()) as { imageUrl?: string };
+      if (!result.imageUrl) {
+        throw new Error('No image URL returned.');
+      }
       setGeneratedImage(result);
       toast({
         title: 'Image Generated',

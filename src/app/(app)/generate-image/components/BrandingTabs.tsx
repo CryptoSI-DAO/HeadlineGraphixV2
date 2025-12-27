@@ -13,7 +13,7 @@ import { Brush, Palette, Type } from 'lucide-react';
 export const BrandingTabs = ({
   brand,
   onBrandChange,
-  brandTones,
+  brandOptions,
   primaryColor,
   onPrimaryColorChange,
   font,
@@ -23,7 +23,7 @@ export const BrandingTabs = ({
 }: {
   brand: string;
   onBrandChange: (value: string) => void;
-  brandTones: string[];
+  brandOptions: string[];
   primaryColor: string;
   onPrimaryColorChange: (value: string) => void;
   font: string;
@@ -39,13 +39,13 @@ export const BrandingTabs = ({
     <TabsContent value="preset" className="pt-4">
       <Select value={brand} onValueChange={onBrandChange}>
         <SelectTrigger>
-          <SelectValue placeholder="Select a brand preset" />
-        </SelectTrigger>
-        <SelectContent>
-          {brandTones.map(tone => (
-            <SelectItem key={tone} value={tone}>
-              {tone}
-            </SelectItem>
+        <SelectValue placeholder="Select a brand preset" />
+      </SelectTrigger>
+      <SelectContent>
+        {brandOptions.map(tone => (
+          <SelectItem key={tone} value={tone}>
+            {tone}
+          </SelectItem>
           ))}
         </SelectContent>
       </Select>
