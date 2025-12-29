@@ -13,6 +13,7 @@ import { normalizePreferences, sanitizePreferences } from './dashboard/utils';
 import {
   ContentPreferencesCard,
   CreditBalanceCard,
+  PwaInstallBar,
   ProfileFieldCard,
   QuickStartCard,
   ReferenceImagePreviewCard,
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const [emailValue, setEmailValue] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
   const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [showInstallBar, setShowInstallBar] = useState(false);
 
   useEffect(() => {
     setLocalPreferences(normalizePreferences(preferences));
@@ -151,7 +153,9 @@ export default function DashboardPage() {
           {isProfileLoading ? 'Loading profile...' : `Welcome back, ${displayProfile.name}!`}
         </span>
       </Header>
-      <main className="flex-1 p-4 md:p-6 space-y-6">
+      <main
+        className={`flex-1 space-y-6 p-4 md:p-6 ${showInstallBar ? 'pb-24' : ''}`}
+      >
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <CreditBalanceCard />
           <ProfileFieldCard
@@ -191,6 +195,7 @@ export default function DashboardPage() {
 
         <QuickStartCard />
       </main>
+      <PwaInstallBar onVisibilityChange={setShowInstallBar} />
     </>
   );
 }

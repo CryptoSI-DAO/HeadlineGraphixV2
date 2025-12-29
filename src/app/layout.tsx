@@ -13,6 +13,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'HeadlineGraphix V2',
   description: 'Generate content packs from headlines.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({
