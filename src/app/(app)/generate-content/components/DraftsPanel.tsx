@@ -56,12 +56,12 @@ export const DraftsPanel = ({
         </div>
       ) : drafts ? (
         <Tabs value={activeTab} onValueChange={onActiveTabChange} className="w-full">
-          <div className="flex items-center justify-between px-4 pt-4 border-b">
-            <TabsList>
+          <div className="flex flex-col gap-3 px-4 pt-4 border-b sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full sm:w-auto">
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               {activeTab === 'preview' && (
                 <Button variant="outline" size="sm" onClick={() => onActiveTabChange('draft')}>
                   <Pencil /> Edit

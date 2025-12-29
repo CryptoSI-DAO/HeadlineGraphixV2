@@ -94,12 +94,12 @@ export const ImageConfigPanel = ({
   isGeneratingPrompt: boolean;
   promptModelLabel: string;
 }) => (
-  <Card className="flex flex-col h-[calc(100vh-10rem)]">
+  <Card className="flex flex-col lg:h-[calc(100vh-10rem)]">
     <CardHeader>
       <CardTitle>1. Configure Infographic</CardTitle>
     </CardHeader>
-    <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
-      <div className="h-full overflow-y-scroll">
+    <CardContent className="flex-1 min-h-0 p-0 lg:overflow-hidden">
+      <div className="lg:h-full lg:overflow-y-auto">
         <div className="space-y-6 p-6">
           <div className="space-y-2">
             <Label htmlFor="headline">

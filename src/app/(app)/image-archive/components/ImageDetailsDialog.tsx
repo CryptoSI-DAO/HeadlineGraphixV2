@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -20,8 +21,11 @@ export const ImageDetailsDialog = ({
 }) => (
   <Dialog open={!!image} onOpenChange={open => !open && onClose()}>
     <DialogContent className="max-w-2xl">
-      <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <DialogHeader className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <DialogTitle>Image Details</DialogTitle>
+        <DialogDescription className="sr-only">
+          View image metadata and download the selected asset.
+        </DialogDescription>
         {image && (
           <Button variant="outline" size="sm" onClick={() => onDownloadClick(image)}>
             <Download className="mr-2 h-4 w-4" />

@@ -76,7 +76,7 @@ const SaveDialogBody = ({
               Select one of your 10 available slots to save this content pack.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-5 gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4 py-4 sm:grid-cols-3 md:grid-cols-5">
             {Array.from({ length: 10 }).map((_, index) => {
               const slotNumber = index + 1;
               const isFilled = Boolean(filledSlots[index]);

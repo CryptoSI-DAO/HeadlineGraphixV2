@@ -75,7 +75,7 @@ export default function ContentLibraryPage() {
       <main className="flex-1 p-4 md:p-6">
         <Card>
             <CardContent className="p-0">
-                <Table>
+                <Table className="min-w-[700px]">
                     <TableHeader>
                         <TableRow>
                         <TableHead className="w-[80px]">Slot</TableHead>

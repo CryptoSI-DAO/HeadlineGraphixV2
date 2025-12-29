@@ -73,12 +73,12 @@ export const ArticleInputs = ({
       </Dialog>
     </div>
     <Input id="headline" value={headline} onChange={e => onHeadlineChange(e.target.value)} />
-    <div className="flex items-center pt-2">
+    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
       <Label>Use full article for context?</Label>
       <RadioGroup
         value={useFullArticle}
         onValueChange={value => onUseFullArticleChange(value as 'yes' | 'no')}
-        className="ml-4 flex items-center"
+        className="flex items-center sm:ml-4"
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="yes" id="r-yes" />
@@ -89,7 +89,7 @@ export const ArticleInputs = ({
           <Label htmlFor="r-no">No</Label>
         </div>
       </RadioGroup>
-      <div className="ml-auto">
+      <div className="sm:ml-auto">
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">

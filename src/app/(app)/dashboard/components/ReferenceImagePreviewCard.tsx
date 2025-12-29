@@ -13,7 +13,7 @@ export const ReferenceImagePreviewCard = ({
   isLoading: boolean;
 }) => (
   <Card>
-    <CardHeader className="flex flex-row items-center justify-between">
+    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <CardTitle>Reference Image Library</CardTitle>
         <CardDescription>A preview of your most recent images.</CardDescription>
@@ -33,6 +33,7 @@ export const ReferenceImagePreviewCard = ({
                 src={image.imageUrl}
                 alt={image.description}
                 fill
+                sizes="(min-width: 768px) 25vw, 50vw"
                 className="object-cover"
                 data-ai-hint={image.imageHint}
               />

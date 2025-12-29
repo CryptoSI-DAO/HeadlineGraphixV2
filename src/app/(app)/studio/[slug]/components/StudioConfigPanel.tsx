@@ -33,7 +33,7 @@ export const StudioConfigPanel = ({
   const referenceImages = PlaceHolderImages.slice(0, 3);
 
   return (
-    <Card className="h-fit sticky top-24">
+    <Card className="h-fit lg:sticky lg:top-24">
       <CardHeader>
         <CardTitle>Configuration</CardTitle>
         <CardDescription>Generate content for: &ldquo;{headlineTitle}&rdquo;</CardDescription>
@@ -56,7 +56,7 @@ export const StudioConfigPanel = ({
         </div>
         <div className="space-y-2">
           <Label>Reference Image</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {referenceImages.map(img => (
               <button
                 key={img.id}

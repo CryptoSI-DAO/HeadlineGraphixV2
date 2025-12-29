@@ -12,7 +12,7 @@ export const ReferenceImageGrid = ({
 }) => (
   <div className="space-y-2">
     <p className="text-sm font-medium">Add up to 4 reference images</p>
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       {referenceImages.map((imageUrl, index) => (
         <button
           key={index}

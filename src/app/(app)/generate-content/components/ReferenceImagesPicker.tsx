@@ -33,7 +33,7 @@ export const ReferenceImagesPicker = ({
         {isLoadingArchiveImages ? 'Loading...' : 'Fetch from archive'}
       </Button>
     </div>
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {referenceImages.map(img => (
         <button
           key={img.id}

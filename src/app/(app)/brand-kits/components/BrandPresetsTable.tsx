@@ -25,7 +25,7 @@ export const BrandPresetsTable = ({
 }) => (
   <Card>
     <CardContent className="p-0">
-      <Table>
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             <TableHead>Brand Name</TableHead>

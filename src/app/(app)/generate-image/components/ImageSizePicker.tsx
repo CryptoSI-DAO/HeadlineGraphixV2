@@ -20,7 +20,7 @@ export const ImageSizePicker = ({
 }) => (
   <div className="space-y-3">
     <Label>Image Size</Label>
-    <RadioGroup value={imageSize} onValueChange={onChange} className="grid grid-cols-3 gap-4">
+    <RadioGroup value={imageSize} onValueChange={onChange} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {options.map(size => (
         <Label
           key={size.id}

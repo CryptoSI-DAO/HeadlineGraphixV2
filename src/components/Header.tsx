@@ -42,12 +42,12 @@ function HeaderAuthButtons() {
 
 export function Header({ title, cta, children }: { title: string; cta?: { href: string; label: string }; children?: ReactNode }) {
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur-sm md:flex-row md:items-center md:gap-4 md:px-6 md:py-0 md:h-16">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-lg font-semibold tracking-tight sm:text-xl">{title}</h1>
       </div>
-      <div className="ml-auto flex items-center gap-4">
+      <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end md:gap-4">
         {children}
         {cta && <Button asChild><Link href={cta.href}>{cta.label}</Link></Button>}
         <HeaderAuthButtons />

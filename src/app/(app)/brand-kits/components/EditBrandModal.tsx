@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -148,13 +149,16 @@ export const EditBrandModal = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{isNewBrand ? 'Add New Brand' : 'Edit Brand'}</DialogTitle>
+          <DialogDescription>
+            Update the brand details, colors, and logo for this kit.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="logo-upload" className="text-right">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label htmlFor="logo-upload" className="sm:text-right">
               Logo
             </Label>
-            <div className="col-span-3 space-y-2">
+            <div className="space-y-2 sm:col-span-3">
               <Input
                 id="logo-upload"
                 type="file"
@@ -190,20 +194,20 @@ export const EditBrandModal = ({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="logo-alt" className="text-right">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label htmlFor="logo-alt" className="sm:text-right">
               Logo Alt Text
             </Label>
             <Input
               id="logo-alt"
               value={preset.logoAlt}
               onChange={e => onFieldChange('logoAlt', e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3"
               placeholder="Brand logo"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="brand-name" className="text-right">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label htmlFor="brand-name" className="sm:text-right">
               Brand Name
             </Label>
             <Input
@@ -216,12 +220,12 @@ export const EditBrandModal = ({
                   onFieldChange('logoAlt', nextName ? `${nextName} logo` : '');
                 }
               }}
-              className="col-span-3"
+              className="sm:col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Primary Color</Label>
-            <div className="col-span-3 flex items-center gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label className="sm:text-right">Primary Color</Label>
+            <div className="flex items-center gap-2 sm:col-span-3">
               <div
                 className="w-8 h-8 rounded-md border"
                 style={{ backgroundColor: preset.primaryColor }}
@@ -232,9 +236,9 @@ export const EditBrandModal = ({
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Secondary Color</Label>
-            <div className="col-span-3 flex items-center gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label className="sm:text-right">Secondary Color</Label>
+            <div className="flex items-center gap-2 sm:col-span-3">
               <div
                 className="w-8 h-8 rounded-md border"
                 style={{ backgroundColor: preset.secondaryColor }}
@@ -245,9 +249,9 @@ export const EditBrandModal = ({
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Trim Color</Label>
-            <div className="col-span-3 flex items-center gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label className="sm:text-right">Trim Color</Label>
+            <div className="flex items-center gap-2 sm:col-span-3">
               <div
                 className="w-8 h-8 rounded-md border"
                 style={{ backgroundColor: preset.trimColor }}
@@ -258,22 +262,22 @@ export const EditBrandModal = ({
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="font-family" className="text-right">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label htmlFor="font-family" className="sm:text-right">
               Font Family
             </Label>
             <Input
               id="font-family"
               value={preset.font}
               onChange={e => onFieldChange('font', e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="art-style" className="text-right">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <Label htmlFor="art-style" className="sm:text-right">
               Art Style
             </Label>
-            <div className="col-span-3 space-y-2">
+            <div className="space-y-2 sm:col-span-3">
               <Select
                 value={isArtStyleOther ? 'Other' : preset.artStyle}
                 onValueChange={value => {
