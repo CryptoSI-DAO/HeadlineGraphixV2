@@ -1,1 +1,1 @@
-export * from './generate-content-drafts';
+export * from './generate-content-drafts/index';

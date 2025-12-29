@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       // Avoid eval-based source maps which can choke on edge-case characters.
       config.devtool = 'source-map';
     }
+    config.module = config.module ?? {};
+    // Genkit pulls in OpenTelemetry which uses dynamic requires that webpack flags.
+    config.module.exprContextCritical = false;
     return config;
   },
   images: {

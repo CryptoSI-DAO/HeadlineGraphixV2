@@ -24,38 +24,40 @@
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [Data Model](#data-model)
-- [AI Flows](#ai-flows)
+- [AI Models & Flows](#ai-models--flows)
 - [Technologies](#technologies)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
 
-HeadlineGraphix V2 is a sophisticated AI-powered content generation platform that transforms news headlines into engaging content packs. Built with Next.js 15, TypeScript, and Supabase, it leverages Google's Genkit AI framework to generate blog posts, LinkedIn content, and custom images based on current news trends.
+HeadlineGraphix V2 is an AI-powered content studio that turns current headlines into marketing-ready drafts and visuals. Built with Next.js 15, TypeScript, and Supabase, it combines RSS headline feeds, optional full-article extraction, brand kits, and model selection to deliver blog posts, LinkedIn drafts, and infographic-ready images.
 
-The platform provides a comprehensive suite of tools for content creators, marketers, and social media managers to quickly produce high-quality, brand-aligned content from trending news topics.
+The platform is designed for content creators, marketers, and social media teams who need fast, brand-aligned output with repeatable workflows.
 
 ## Features
 
 ### 🎯 Content Generation
-- **AI-Powered Drafts**: Generate blog posts and LinkedIn posts from news headlines
-- **Custom Brand Tone**: Apply your brand's voice and style to generated content
-- **Reference Images**: Upload and use reference images to guide content generation
-- **User Angles**: Add custom perspectives and angles to generated content
+- **AI-Powered Drafts**: Generate blog posts and LinkedIn posts from headlines or full articles
+- **Model Selector**: Switch between OpenRouter MiMo V2 Flash and Z.ai GLM 4.5 Air
+- **Brand Kits**: Apply consistent colors, fonts, and tone across drafts
+- **Backlink Suggestions**: Inject preferred backlink URLs into generated content
+- **User Angles**: Add custom perspectives and notes for the AI to emphasize
 
 ### 📰 News Integration
 - **Headline Fetching**: Access the latest news headlines from various sources
-- **Content Context**: Full article content integration for more accurate generation
+- **Content Context**: Optional full-article extraction for deeper context
 - **Trending Topics**: Focus on specific topics relevant to your audience
 
 ### 🎨 Visual Content
-- **AI Image Generation**: Create custom images and infographics using Google's Imagen
-- **Image Archive**: Store and manage reference images for future use
-- **Brand Kits**: Create and maintain consistent visual branding
+- **Prompt Builder**: Generate art-direction prompts with MiMo V2 Flash or GLM-4.6V (with references)
+- **Image Generation**: Produce images via OpenAI `gpt-image-1.5`
+- **Reference Images**: Upload and reuse image references in the archive
+- **Brand Kits**: Apply brand colors, fonts, and styles to visuals
 
 ### 📊 Content Management
-- **Content Library**: Organize and track all generated content
-- **History Tracking**: View and manage previously generated content packs
+- **Content Library**: Organize and track generated content packs
+- **History Slots**: Save and revisit previous drafts
 - **User Preferences**: Save focus topics and backlink URLs for quick access
 
 ### 🎨 Design & UX
@@ -71,10 +73,16 @@ The main dashboard provides an overview of your content generation activity, cre
 
 ### Content Generation Workflow
 1. **Fetch Headlines**: Browse the latest news headlines
-2. **Select Content**: Choose a headline and provide context
-3. **Customize**: Add brand tone, reference images, and user angles
-4. **Generate**: Create blog posts, LinkedIn content, and images
-5. **Review**: Edit and export your generated content
+2. **Select Content**: Choose a headline and optionally pull the full article text
+3. **Customize**: Pick a model, brand kit, references, and user angle
+4. **Generate**: Create blog posts and LinkedIn drafts
+5. **Save**: Store drafts in the content library
+
+### Infographic Workflow
+1. **Summarize**: Create or auto-generate a short summary
+2. **Prompt**: Build a detailed prompt (MiMo V2 Flash or GLM-4.6V with references)
+3. **Generate**: Produce the image with OpenAI `gpt-image-1.5`
+4. **Archive**: Save the final image to the archive
 
 ## Installation
 
@@ -82,7 +90,10 @@ The main dashboard provides an overview of your content generation activity, cre
 - Node.js 18+ 
 - npm or yarn
 - Supabase project (database + storage)
-- Google AI API key (for AI features)
+- Google AI API key (for Genkit flows)
+- OpenRouter API key (MiMo V2 Flash text + prompt generation)
+- Z.ai API key (GLM 4.5 Air text + GLM-4.6V prompt generation with references)
+- OpenAI API key (image generation)
 
 ### Clone the Repository
 ```bash
@@ -112,9 +123,18 @@ SUPABASE_DB_PASSWORD=optional_local_db_password
 
 # Google AI Configuration (Required for AI features)
 GOOGLE_GENAI_API_KEY=your_google_ai_api_key
+
+# OpenRouter (MiMo V2 Flash for drafts + prompt/summary)
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# Z.ai (GLM 4.5 Air drafts + GLM-4.6V prompt generation)
+ZAI_API_KEY=your_zai_api_key
+
+# OpenAI (image generation)
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-**Important**: The `GOOGLE_GENAI_API_KEY` is required for AI content generation features to work.
+**Note**: `GOOGLE_GENAI_API_KEY` is only required for Genkit-based flows. The main draft and image workflows use OpenRouter, Z.ai, and OpenAI.
 
 ### Environment Variables Reference
 
@@ -127,6 +147,11 @@ The `.env.local.example` file documents every variable the app currently expects
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for server actions / MCP automations (keep secret) | `your_service_role_key` |
 | `SUPABASE_DB_PASSWORD` | Optional password for local `supabase db start` | `super-secret` |
 | `GOOGLE_GENAI_API_KEY` | Google AI Studio key required by Genkit flows | `your_google_ai_api_key_here` |
+| `OPENROUTER_API_KEY` | OpenRouter key for MiMo V2 Flash (drafts + prompt/summary) | `sk-or-...` |
+| `ZAI_API_KEY` | Z.ai key for GLM 4.5 Air + GLM-4.6V (vision prompt) | `zai-...` |
+| `OPENAI_API_KEY` | OpenAI key for image generation (`gpt-image-1.5`) | `sk-...` |
+
+If you only plan to use one content model provider, you can omit the other key; selecting the missing provider will return an error.
 
 ### Run the Development Server
 ```bash
@@ -149,9 +174,9 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 2. Enable the `supabase` MCP server in your IDE/CLI config so Codex can reach the project (see the Supabase MCP docs for the exact config snippet).
 3. Store `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with your MCP secret manager so the automation layer never reads them from plain `.env` files.
 
-### Google AI Setup
+### Google AI Setup (Optional)
 1. Get an API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add the API key to your `.env.local` file
+2. Add the API key to your `.env.local` file if you plan to use Genkit-based flows
 3. Ensure you have the necessary permissions for content generation
 
 ### News Feed Setup
@@ -218,29 +243,34 @@ HeadlineGraphixV2/
 
 See `docs/data-model.md` for a full breakdown of the Supabase tables and JSON shapes (hgprofiles, reference images, AI preferences, and content packs).
 
-## AI Flows
+## AI Models & Flows
 
-The application implements several AI flows using Google's Genkit:
+HeadlineGraphix uses multiple model providers depending on the workflow:
 
 ### Content Draft Generation
-Located in `src/ai/flows/generate-content-drafts.ts`
+Located in `src/ai/flows/generate-content-drafts/index.ts`
 
 - **Input**: Headline, article content, brand tone, reference images, user angle
-- **Output**: Blog post (markdown), LinkedIn post (markdown), infographic URL
-- **Models**: Google AI text generation and Imagen for images
+- **Output**: Blog post (markdown), LinkedIn post (markdown), infographic metadata
+- **Models**:
+  - **OpenRouter**: `xiaomi/mimo-v2-flash:free`
+  - **Z.ai**: `glm-4.5-air`
+
+### Image Prompt + Summary
+Located in `src/app/api/image-summary/route.ts` and `src/app/api/image-prompt/route.ts`
+
+- **Summary model**: `xiaomi/mimo-v2-flash:free` via OpenRouter
+- **Prompt model (no references)**: `xiaomi/mimo-v2-flash:free` via OpenRouter
+- **Prompt model (with references)**: `GLM-4.6V` via Z.ai
 
 ### Image Generation
-Located in `src/ai/flows/generate-image.ts`
+Located in `src/app/api/glm-image/route.ts`
 
-- **Input**: Text prompt, brand style, reference images
-- **Output**: Generated image URL
-- **Models**: Google Imagen 4.0 Fast Generate
+- **Model**: OpenAI `gpt-image-1.5`
 
-### Headline Summarization
-Located in `src/ai/flows/summarize-headline.ts`
+## AI Utilities
 
-- **Input**: News headline and content
-- **Output**: Summarized content for context
+The Genkit configuration defaults to `googleai/gemini-2.5-flash` in `src/ai/genkit.ts` for any Genkit-based flows.
 
 ## Technologies
 
@@ -253,8 +283,10 @@ Located in `src/ai/flows/summarize-headline.ts`
 
 ### Backend & AI
 - **Supabase**: Hosted Postgres, Authentication, and Storage
-- **Google Genkit 1.20.0**: AI framework for flows
-- **Google AI**: Text and image generation models
+- **OpenRouter**: MiMo V2 Flash for drafts and prompt/summary
+- **Z.ai**: GLM 4.5 Air + GLM-4.6V for drafts and vision prompts
+- **OpenAI**: `gpt-image-1.5` for image generation
+- **Google Genkit**: Optional flows and utilities
 
 ### Development Tools
 - **ESLint**: Code linting

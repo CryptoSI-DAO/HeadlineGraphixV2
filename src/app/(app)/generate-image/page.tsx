@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +11,7 @@ import { ImageArchiveDialog, ImageConfigPanel, ImageReviewPanel } from './compon
 import { useReferenceImages as useReferenceArchive } from '@/hooks/use-reference-images';
 import { useImageGeneration, useReferenceImages as useReferenceSlots } from './hooks';
 
-export default function GenerateImagePage() {
+function GenerateImagePageInner() {
   const { toast } = useToast();
   const { preferences } = useUserPreferences();
   const searchParams = useSearchParams();
@@ -415,5 +415,13 @@ export default function GenerateImagePage() {
         onSelect={handleSelectFromArchive}
       />
     </>
+  );
+}
+
+export default function GenerateImagePage() {
+  return (
+    <Suspense fallback={null}>
+      <GenerateImagePageInner />
+    </Suspense>
   );
 }

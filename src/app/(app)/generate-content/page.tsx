@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { CheckCircle } from 'lucide-react';
@@ -14,7 +14,7 @@ import { isGoogleNewsUrl } from './utils';
 import { GenerateContentLayout } from './components';
 import { useArticleContent, useGenerateContent, useReferenceImages } from './hooks';
 
-export default function GenerateContentPage() {
+function GenerateContentPageInner() {
   const { addHistoryItem, preferences, history } = useAppContext();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -185,5 +185,13 @@ export default function GenerateContentPage() {
         estimatedSeconds={estimatedSeconds}
       />
     </>
+  );
+}
+
+export default function GenerateContentPage() {
+  return (
+    <Suspense fallback={null}>
+      <GenerateContentPageInner />
+    </Suspense>
   );
 }
