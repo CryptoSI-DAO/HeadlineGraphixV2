@@ -20,9 +20,29 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
+function getArgValue(flag: string) {
+  const index = process.argv.indexOf(flag);
+  if (index === -1) return undefined;
+  return process.argv[index + 1];
+}
+
 async function addUser() {
-  const email = 'info@webarastudio.com';
-  const password = 'Talent81';
+  const email =
+    getArgValue('--email') ||
+    process.env.NEW_USER_EMAIL ||
+    process.env.SEED_USER_EMAIL;
+  const password =
+    getArgValue('--password') ||
+    process.env.NEW_USER_PASSWORD ||
+    process.env.SEED_USER_PASSWORD;
+
+  if (!email || !password) {
+    console.error('Missing required user credentials.');
+    console.error(
+      'Provide --email and --password flags or set NEW_USER_EMAIL and NEW_USER_PASSWORD.'
+    );
+    process.exit(1);
+  }
 
   console.log('Creating user with email:', email);
 
