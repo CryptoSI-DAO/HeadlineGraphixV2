@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![HeadlineGraphix Logo](https://via.placeholder.com/150x150/A7C4BC/FFFFFF?text=HG)
+<img src="public/hglogolite.png" alt="HeadlineGraphix Logo" width="180" />
 
 **AI-Powered Content Generation Platform**
 
