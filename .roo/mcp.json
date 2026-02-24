@@ -1,11 +1,30 @@
 {
-  "mcpServers": {
-    "puppeteer": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ]
-    }
-  }
+	"mcpServers": {
+		"puppeteer": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-puppeteer"
+			]
+		},
+		"supabase": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@0.5.5",
+				"--access-token",
+				"sbp_969fde8ea6f415ac388472d3b3f236e4fcbac8bd"
+			],
+			"alwaysAllow": [
+				"list_organizations",
+				"list_projects",
+				"get_project",
+				"list_tables",
+				"list_extensions",
+				"get_project_url",
+				"get_anon_key",
+				"apply_migration"
+			]
+		}
+	}
 }

@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'supabase.cryptosi.org',
+        hostname: '**.supabase.co',
         port: '',
         pathname: '/**',
       },
