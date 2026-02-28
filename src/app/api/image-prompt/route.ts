@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Buffer } from 'node:buffer';
 import { extractMessageContent } from '@/ai/flows/generate-content-drafts/parse';
+import { getOpenRouterModel } from '@/ai/flows/generate-content-drafts/openrouter';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const model = 'xiaomi/mimo-v2-flash:free';
+  const model = getOpenRouterModel();
   const brandInfo = payload.brand
     ? [
         payload.brand.name ? `Brand: ${payload.brand.name}.` : null,

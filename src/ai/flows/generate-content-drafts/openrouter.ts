@@ -1,11 +1,17 @@
 import { extractMessageContent } from './parse';
 
+const DEFAULT_OPENROUTER_MODEL = 'xiaomi/mimo-v2-flash:free';
+
+export function getOpenRouterModel() {
+  return process.env.OPENROUTER_MODEL?.trim() || DEFAULT_OPENROUTER_MODEL;
+}
+
 export async function requestOpenRouterCompletion(prompt: string) {
-  const model = 'xiaomi/mimo-v2-flash:free';
+  const model = getOpenRouterModel();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error(
-      'OpenRouter API key is not configured. Set OPENROUTER_API_KEY in your environment to use MiMo V2 Flash.'
+      'OpenRouter API key is not configured. Set OPENROUTER_API_KEY in your environment to use OpenRouter.'
     );
   }
 

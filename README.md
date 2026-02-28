@@ -124,8 +124,9 @@ SUPABASE_DB_PASSWORD=optional_local_db_password
 # Google AI Configuration (Required for AI features)
 GOOGLE_GENAI_API_KEY=your_google_ai_api_key
 
-# OpenRouter (MiMo V2 Flash for drafts + prompt/summary)
+# OpenRouter (drafts + prompt/summary)
 OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODEL=xiaomi/mimo-v2-flash:free
 
 # Z.ai (GLM 4.5 Air drafts + GLM-4.6V prompt generation)
 ZAI_API_KEY=your_zai_api_key
@@ -147,7 +148,8 @@ The `.env.local.example` file documents every variable the app currently expects
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for server actions / MCP automations (keep secret) | `your_service_role_key` |
 | `SUPABASE_DB_PASSWORD` | Optional password for local `supabase db start` | `super-secret` |
 | `GOOGLE_GENAI_API_KEY` | Google AI Studio key required by Genkit flows | `your_google_ai_api_key_here` |
-| `OPENROUTER_API_KEY` | OpenRouter key for MiMo V2 Flash (drafts + prompt/summary) | `sk-or-...` |
+| `OPENROUTER_API_KEY` | OpenRouter key for drafts + prompt/summary | `sk-or-...` |
+| `OPENROUTER_MODEL` | OpenRouter model slug used for text drafts, prompt generation, and summaries | `xiaomi/mimo-v2-flash:free` |
 | `ZAI_API_KEY` | Z.ai key for GLM 4.5 Air + GLM-4.6V (vision prompt) | `zai-...` |
 | `OPENAI_API_KEY` | OpenAI key for image generation (`gpt-image-1.5`) | `sk-...` |
 

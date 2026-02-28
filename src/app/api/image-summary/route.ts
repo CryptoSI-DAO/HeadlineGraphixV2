@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { extractMessageContent } from '@/ai/flows/generate-content-drafts/parse';
+import { getOpenRouterModel } from '@/ai/flows/generate-content-drafts/openrouter';
 
 type SummaryPayload = {
   headline?: string;
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const model = 'xiaomi/mimo-v2-flash:free';
+  const model = getOpenRouterModel();
   const prompt = [
     'You are an art director for marketing infographics.',
     'Write 1-2 concise sentences describing what the image should depict for the headline.',
