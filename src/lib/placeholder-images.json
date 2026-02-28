@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "ref-1",
+      "description": "Abstract architecture",
+      "imageUrl": "https://images.unsplash.com/photo-1512998844734-cd2cca565822?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzY0MTM4MTI4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract architecture"
+    },
+    {
+      "id": "ref-2",
+      "description": "Cityscape at night",
+      "imageUrl": "https://images.unsplash.com/photo-1605702012553-e954fbde66eb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjaXR5JTIwbmlnaHR8ZW58MHx8fHwxNzY0MjMzNTg5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city night"
+    },
+    {
+      "id": "ref-3",
+      "description": "Minimalist office interior",
+      "imageUrl": "https://images.unsplash.com/photo-1518655048521-f130df041f66?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtaW5pbWFsaXN0JTIwb2ZmaWNlfGVufDB8fHx8MTc2NDI1MDM0MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist office"
+    },
+    {
+      "id": "ref-4",
+      "description": "Person working on laptop",
+      "imageUrl": "https://images.unsplash.com/photo-1501504905252-473c47e087f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxsYXB0b3AlMjB3b3JrfGVufDB8fHx8MTc2NDE5MzA5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "laptop work"
+    },
+    {
+      "id": "ref-5",
+      "description": "Data visualization graph",
+      "imageUrl": "https://images.unsplash.com/photo-1599658880436-c61792e70672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkYXRhJTIwZ3JhcGh8ZW58MHx8fHwxNzY0MTY4NDQ0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "data graph"
+    },
+    {
+      "id": "ref-6",
+      "description": "Mountain landscape",
+      "imageUrl": "https://images.unsplash.com/photo-1612676239016-41e2c92b8e06?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtb3VudGFpbiUyMGxhbmRzY2FwZXxlbnwwfHx8fDE3NjQxNTcwNTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mountain landscape"
+    },
+    {
+      "id": "ref-7",
+      "description": "Team collaboration",
+      "imageUrl": "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NjQyMDI4Njl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "ref-8",
+      "description": "Coffee and notebook",
+      "imageUrl": "https://images.unsplash.com/photo-1543670199-8b65965e3aaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb2ZmZWUlMjBub3RlYm9va3xlbnwwfHx8fDE3NjQyNTMxMzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coffee notebook"
+    },
+    {
+      "id": "ref-9",
+      "description": "Neon lights",
+      "imageUrl": "https://images.unsplash.com/photo-1544365558-35aa4afcf11f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxuZW9uJTIwbGlnaHRzfGVufDB8fHx8MTc2NDI1MTQ0OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "neon lights"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+import type { BrandPreset } from './types';
+
+export const mockBrandPresets: BrandPreset[] = [
+  {
+    id: '1',
+    name: 'Afroball connect',
+    primaryColor: '#F44336',
+    secondaryColor: '#121212',
+    trimColor: '#FFD700',
+    font: 'Montserrat',
+    artStyle: 'Afro-Futuristic Minimalism',
+    logoUrl: 'https://picsum.photos/seed/afroball/40/40',
+    logoAlt: 'Afroball connect logo',
+  },
+  {
+    id: '2',
+    name: 'Lex Consulting',
+    primaryColor: '#708090',
+    secondaryColor: '#F8F8F8',
+    trimColor: '#007BFF',
+    font: 'Cinzel',
+    artStyle: 'Geometric',
+    logoUrl: 'https://picsum.photos/seed/lex/40/40',
+    logoAlt: 'Lex Consulting logo',
+  },
+  {
+    id: '3',
+    name: 'Crypto Waffle',
+    primaryColor: '#43C4CC',
+    secondaryColor: '#FFD878',
+    trimColor: '#2A2B2D',
+    font: 'Fredoka',
+    artStyle: 'Cartoon',
+    logoUrl: 'https://picsum.photos/seed/waffle/40/40',
+    logoAlt: 'Crypto Waffle logo',
+  },
+];
