@@ -14,8 +14,6 @@ const nextConfig: NextConfig = {
       config.devtool = 'source-map';
     }
     config.module = config.module ?? {};
-    // Genkit pulls in OpenTelemetry which uses dynamic requires that webpack flags.
-    config.module.exprContextCritical = false;
     return config;
   },
   images: {
