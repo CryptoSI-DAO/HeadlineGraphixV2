@@ -1,35 +1,13 @@
 import { Buffer } from 'node:buffer';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
 import { ALLOWED_LOGO_TYPES, MAX_LOGO_SIZE_BYTES } from '@/lib/brand-kits';
 import { extractMessageContent } from '@/ai/flows/generate-content-drafts/parse';
+import { getUserId } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
 const MODEL = 'GLM-4.6V';
 const API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
-
-async function getUserIdFromRequest(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return null;
-  }
-
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL || '', env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
-    return null;
-  }
-  return user.id;
-}
 
 function extractJsonBlock(content: string) {
   const fenceRegex = /```(?:json)?([\s\S]*?)```/i;
@@ -192,7 +170,7 @@ async function requestLogoScan(imageBase64: string, imageType: string) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -28,17 +28,12 @@ export default function LoginPage() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    console.log('Login attempt - Email:', email);
     const supabase = getBrowserClient();
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    console.log('Login response - Error:', error);
-    console.log('Login response - Data:', data);
 
     if (error) {
       setErrorMessage(error.message);
@@ -46,8 +41,6 @@ export default function LoginPage() {
       return;
     }
 
-    console.log('Login successful - User ID:', data.user?.id);
-    console.log('Login successful - User email:', data.user?.email);
     router.replace('/');
   }, [email, password, router]);
 

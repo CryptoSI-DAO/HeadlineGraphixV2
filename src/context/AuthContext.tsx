@@ -22,14 +22,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     const supabase = getBrowserClient();
-    
-    console.log('AuthContext - Initializing auth check');
-    console.log('AuthContext - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     supabase.auth
       .getSession()
       .then(({ data }) => {
-        console.log('AuthContext - Session data:', data);
         if (!isMounted) {
           return;
         }
@@ -47,8 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      console.log('AuthContext - Auth state changed:', _event);
-      console.log('AuthContext - New session:', nextSession);
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
       setIsLoading(false);
@@ -61,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    console.log('AuthContext - Signing out');
     const supabase = getBrowserClient();
     const { error } = await supabase.auth.signOut();
     if (error) {

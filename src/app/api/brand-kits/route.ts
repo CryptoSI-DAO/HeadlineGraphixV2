@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server';
 import { listBrandKits, countBrandKits } from '@/lib/data';
 import type { BrandKit } from '@/lib/data/types';
 import { getAdminClient } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { getUserId } from '@/lib/auth';
 import {
   ALLOWED_LOGO_TYPES,
   MAX_BRAND_KITS,
@@ -15,30 +14,9 @@ import {
 
 export const runtime = 'nodejs';
 
-async function getUserIdFromRequest(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return null;
-  }
-
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL || '', env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
-    return null;
-  }
-  return user.id;
-}
-
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -53,7 +31,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -69,14 +47,12 @@ export async function POST(request: Request) {
     const logoAlt = formData.get('logoAlt') as string | null;
     const logoFile = formData.get('logo') as File | null;
 
-    // Validate required fields
     if (!name || !primaryColor || !secondaryColor || !trimColor || !font || !artStyle) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const supabase = getAdminClient();
 
-    // Check brand limit for new brands
     if (!id) {
       const count = await countBrandKits(userId);
       if (count >= MAX_BRAND_KITS) {
@@ -84,12 +60,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Handle logo upload
     let logoStoragePath: string | undefined;
     let logoUrl: string | undefined;
 
     if (logoFile) {
-      // Validate logo file
       if (!ALLOWED_LOGO_TYPES.includes(logoFile.type)) {
         return NextResponse.json({ error: 'Unsupported image type. Use JPEG, PNG, or WebP.' }, { status: 400 });
       }
@@ -119,7 +93,6 @@ export async function POST(request: Request) {
       logoUrl = publicUrl.publicUrl;
     }
 
-    // Create or update brand
     const brandData: any = {
       user_id: userId,
       name,
@@ -142,7 +115,6 @@ export async function POST(request: Request) {
     let error: any;
 
     if (id) {
-      // Update existing brand
       const result = await supabase
         .from('brand_kits')
         .update(brandData)
@@ -154,7 +126,6 @@ export async function POST(request: Request) {
       data = result.data;
       error = result.error;
     } else {
-      // Create new brand
       const result = await supabase
         .from('brand_kits')
         .insert(brandData)

@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server';
 import { listReferenceImages } from '@/lib/data';
 import type { ReferenceImageMeta } from '@/lib/data';
 import { getAdminClient } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { getUserId } from '@/lib/auth';
 import {
   ALLOWED_REFERENCE_IMAGE_TYPES,
   MAX_REFERENCE_IMAGES,
@@ -16,30 +15,9 @@ const BUCKET_ID = 'reference-images';
 
 export const runtime = 'nodejs';
 
-async function getUserIdFromRequest(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return null;
-  }
-
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL || '', env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
-    return null;
-  }
-  return user.id;
-}
-
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -54,7 +32,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

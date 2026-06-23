@@ -1,35 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { getUserId } from '@/lib/auth';
 import { BUCKET_ID } from '@/lib/brand-kits';
 
 export const runtime = 'nodejs';
 
-async function getUserIdFromRequest(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return null;
-  }
-
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL || '', env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
-    return null;
-  }
-  return user.id;
-}
-
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const userId = await getUserIdFromRequest(request);
+  const userId = await getUserId();
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,7 +27,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Brand kit not found' }, { status: 404 });
     }
 
-    // Delete logo from storage if exists
     if (data.logo_storage_path) {
       const { error: storageError } = await supabase.storage.from(BUCKET_ID).remove([data.logo_storage_path]);
       if (storageError) {
@@ -58,7 +35,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       }
     }
 
-    // Delete brand kit from database
     const { error: deleteError } = await supabase
       .from('brand_kits')
       .delete()

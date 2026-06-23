@@ -1,37 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getAdminClient } from '@/lib/supabase';
-import { env } from '@/lib/env';
-
-async function requireUser(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-  }
-
-  const authClient = createClient(
-    env.NEXT_PUBLIC_SUPABASE_URL || '',
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    }
-  );
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await authClient.auth.getUser(token);
-
-  if (error || !user) {
-    return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-  }
-
-  return { user, error: null };
-}
+import { requireUser } from '@/lib/auth';
 
 export async function DELETE(request: Request, context: { params: { id: string } }) {
-  const { user, error } = await requireUser(request);
+  const { user, error } = await requireUser();
   if (error || !user) {
     return error;
   }
