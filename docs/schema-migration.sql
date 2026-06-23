@@ -1,31 +1,8 @@
-# Supabase Schema SQL
+-- HeadlineGraphixV2 — Schema for self-hosted Supabase (db.cryptosidao.org)
+-- Target: supabase-db container
+-- Run: docker exec -i supabase-db psql -U postgres < docs/schema-migration.sql
 
-Target instance: **self-hosted Supabase** at `db.cryptosidao.org` (Docker container `supabase-db`).
-
-Run via: `docker exec -i supabase-db psql -U postgres < docs/schema-migration.sql`
-
-Or copy/paste individual blocks into the Supabase SQL Editor.
-
-## Tables
-
-| Table | Purpose | Key FK |
-|-------|---------|--------|
-| `hgprofiles` | User profile + preferences | `id → auth.users(id)` |
-| `brand_kits` | Brand configurations + logos | `user_id → hgprofiles(id)` |
-| `reference_images` | Uploaded reference images | `user_id → hgprofiles(id)` |
-| `content_packs` | Generated content | `user_id → hgprofiles(id)` |
-
-## Storage Buckets
-
-| Bucket | Size Limit | Mime Types | Public |
-|--------|-----------|------------|--------|
-| `reference-images` | 5 MB | JPEG, PNG, WebP | ✅ Read |
-| `brand-logos` | 10 MB | JPEG, PNG, WebP | ✅ Read |
-
-## Full Schema SQL
-
-```sql
--- Ensure pgcrypto is available for gen_random_uuid()
+-- Ensure extensions -------------------------------------------------------
 create extension if not exists pgcrypto;
 
 -- ============================================================================
@@ -53,6 +30,7 @@ comment on table public.hgprofiles is 'User profile, preferences, and cached ref
 
 create index if not exists profiles_email_idx on public.hgprofiles(email);
 
+-- updated_at trigger
 create or replace function public.handle_profiles_updated_at()
 returns trigger as $$
 begin
@@ -82,6 +60,8 @@ create table if not exists public.brand_kits (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+comment on table public.brand_kits is 'User brand kit configurations with logo storage';
 
 create index if not exists brand_kits_user_idx on public.brand_kits(user_id);
 
@@ -169,7 +149,7 @@ before delete on public.reference_images
 for each row execute function public.handle_reference_image_deleted();
 
 -- ============================================================================
--- ROW LEVEL SECURITY (auth.uid() based)
+-- ROW LEVEL SECURITY
 -- ============================================================================
 
 alter table public.hgprofiles enable row level security;
@@ -177,29 +157,98 @@ alter table public.brand_kits enable row level security;
 alter table public.reference_images enable row level security;
 alter table public.content_packs enable row level security;
 
--- hgprofiles
-create policy "hgprofiles select own" on public.hgprofiles for select using (auth.uid() = id);
-create policy "hgprofiles insert own" on public.hgprofiles for insert with check (auth.uid() = id);
-create policy "hgprofiles update own" on public.hgprofiles for update using (auth.uid() = id) with check (auth.uid() = id);
-create policy "hgprofiles delete own" on public.hgprofiles for delete using (auth.uid() = id);
+-- Drop any old demo policies
+drop policy if exists "hgprofiles demo access" on public.hgprofiles;
+drop policy if exists "reference_images demo access" on public.reference_images;
+drop policy if exists "content_packs demo access" on public.content_packs;
 
--- brand_kits
-create policy "brand_kits select own" on public.brand_kits for select using (auth.uid() = user_id);
-create policy "brand_kits insert own" on public.brand_kits for insert with check (auth.uid() = user_id);
-create policy "brand_kits update own" on public.brand_kits for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "brand_kits delete own" on public.brand_kits for delete using (auth.uid() = user_id);
+-- hgprofiles: user can CRUD their own profile (id = auth.uid())
+drop policy if exists "hgprofiles select own" on public.hgprofiles;
+create policy "hgprofiles select own"
+  on public.hgprofiles for select
+  using (auth.uid() = id);
 
--- reference_images
-create policy "reference_images select own" on public.reference_images for select using (auth.uid() = user_id);
-create policy "reference_images insert own" on public.reference_images for insert with check (auth.uid() = user_id);
-create policy "reference_images update own" on public.reference_images for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "reference_images delete own" on public.reference_images for delete using (auth.uid() = user_id);
+drop policy if exists "hgprofiles insert own" on public.hgprofiles;
+create policy "hgprofiles insert own"
+  on public.hgprofiles for insert
+  with check (auth.uid() = id);
 
--- content_packs
-create policy "content_packs select own" on public.content_packs for select using (auth.uid() = user_id);
-create policy "content_packs insert own" on public.content_packs for insert with check (auth.uid() = user_id);
-create policy "content_packs update own" on public.content_packs for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "content_packs delete own" on public.content_packs for delete using (auth.uid() = user_id);
+drop policy if exists "hgprofiles update own" on public.hgprofiles;
+create policy "hgprofiles update own"
+  on public.hgprofiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+drop policy if exists "hgprofiles delete own" on public.hgprofiles;
+create policy "hgprofiles delete own"
+  on public.hgprofiles for delete
+  using (auth.uid() = id);
+
+-- brand_kits: user can CRUD their own brand kits
+drop policy if exists "brand_kits select own" on public.brand_kits;
+create policy "brand_kits select own"
+  on public.brand_kits for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "brand_kits insert own" on public.brand_kits;
+create policy "brand_kits insert own"
+  on public.brand_kits for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "brand_kits update own" on public.brand_kits;
+create policy "brand_kits update own"
+  on public.brand_kits for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "brand_kits delete own" on public.brand_kits;
+create policy "brand_kits delete own"
+  on public.brand_kits for delete
+  using (auth.uid() = user_id);
+
+-- reference_images: user can CRUD their own reference images
+drop policy if exists "reference_images select own" on public.reference_images;
+create policy "reference_images select own"
+  on public.reference_images for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "reference_images insert own" on public.reference_images;
+create policy "reference_images insert own"
+  on public.reference_images for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "reference_images update own" on public.reference_images;
+create policy "reference_images update own"
+  on public.reference_images for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "reference_images delete own" on public.reference_images;
+create policy "reference_images delete own"
+  on public.reference_images for delete
+  using (auth.uid() = user_id);
+
+-- content_packs: user can CRUD their own content packs
+drop policy if exists "content_packs select own" on public.content_packs;
+create policy "content_packs select own"
+  on public.content_packs for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "content_packs insert own" on public.content_packs;
+create policy "content_packs insert own"
+  on public.content_packs for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "content_packs update own" on public.content_packs;
+create policy "content_packs update own"
+  on public.content_packs for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "content_packs delete own" on public.content_packs;
+create policy "content_packs delete own"
+  on public.content_packs for delete
+  using (auth.uid() = user_id);
 
 -- ============================================================================
 -- AUTH TRIGGER — auto-create hgprofiles row on signup
@@ -231,7 +280,10 @@ for each row execute function public.handle_new_user();
 -- reference-images: 5MB limit, JPEG/PNG/WebP, public read
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'reference-images', 'reference-images', true, 5242880,
+  'reference-images',
+  'reference-images',
+  true,
+  5242880,
   array['image/jpeg', 'image/png', 'image/webp']
 )
 on conflict (id) do update
@@ -242,7 +294,10 @@ on conflict (id) do update
 -- brand-logos: 10MB limit, JPEG/PNG/WebP, public read
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'brand-logos', 'brand-logos', true, 10485760,
+  'brand-logos',
+  'brand-logos',
+  true,
+  10485760,
   array['image/jpeg', 'image/png', 'image/webp']
 )
 on conflict (id) do update
@@ -250,14 +305,60 @@ on conflict (id) do update
       file_size_limit = excluded.file_size_limit,
       allowed_mime_types = excluded.allowed_mime_types;
 
--- Storage policies
-create policy "reference-images auth read" on storage.objects for select to public using (bucket_id = 'reference-images');
-create policy "reference-images auth write" on storage.objects for insert to authenticated with check (bucket_id = 'reference-images');
-create policy "reference-images auth update" on storage.objects for update to authenticated using (bucket_id = 'reference-images');
-create policy "reference-images auth delete" on storage.objects for delete to authenticated using (bucket_id = 'reference-images');
+-- Storage policies: allow authenticated users to manage their own files
+-- Pattern: path starts with user_id/
+drop policy if exists "reference-images auth read" on storage.objects;
+create policy "reference-images auth read"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'reference-images');
 
-create policy "brand-logos auth read" on storage.objects for select to public using (bucket_id = 'brand-logos');
-create policy "brand-logos auth write" on storage.objects for insert to authenticated with check (bucket_id = 'brand-logos');
-create policy "brand-logos auth update" on storage.objects for update to authenticated using (bucket_id = 'brand-logos');
-create policy "brand-logos auth delete" on storage.objects for delete to authenticated using (bucket_id = 'brand-logos');
-```
+drop policy if exists "reference-images auth write" on storage.objects;
+create policy "reference-images auth write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'reference-images');
+
+drop policy if exists "reference-images auth update" on storage.objects;
+create policy "reference-images auth update"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'reference-images');
+
+drop policy if exists "reference-images auth delete" on storage.objects;
+create policy "reference-images auth delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'reference-images');
+
+drop policy if exists "brand-logos auth read" on storage.objects;
+create policy "brand-logos auth read"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'brand-logos');
+
+drop policy if exists "brand-logos auth write" on storage.objects;
+create policy "brand-logos auth write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'brand-logos');
+
+drop policy if exists "brand-logos auth update" on storage.objects;
+create policy "brand-logos auth update"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'brand-logos');
+
+drop policy if exists "brand-logos auth delete" on storage.objects;
+create policy "brand-logos auth delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'brand-logos');
+
+-- Drop old service-role-only policies from previous schema
+drop policy if exists "reference-images read" on storage.objects;
+drop policy if exists "reference-images service write" on storage.objects;
+
+-- ============================================================================
+-- DONE
+-- ============================================================================
