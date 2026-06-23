@@ -1,34 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUserProfile, updateUserPreferences } from '@/lib/data';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { getUserId } from '@/lib/auth';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Get authenticated user ID
-    const authHeader = request.headers.get('authorization');
-    let userId: string | undefined;
-    
-    if (authHeader) {
-      const supabase = createClient(
-        env.NEXT_PUBLIC_SUPABASE_URL || '',
-        env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      });
-      
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      
-      if (!error && user) {
-        userId = user.id;
-        console.log('Preferences API GET - Using authenticated user ID:', userId);
-      }
-    }
-    
-    const profile = await getCurrentUserProfile(userId);
+    const userId = await getUserId();
+
+    const profile = await getCurrentUserProfile(userId ?? undefined);
     return NextResponse.json({
       focusTopics: profile.focusTopics ?? [],
       backlinkUrls: profile.backlinkUrls ?? [],
@@ -41,29 +19,11 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    // Get authenticated user ID
-    const authHeader = request.headers.get('authorization');
-    let userId: string | undefined;
-    
-    if (authHeader) {
-      const supabase = createClient(
-        env.NEXT_PUBLIC_SUPABASE_URL || '',
-        env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      });
-      
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      
-      if (!error && user) {
-        userId = user.id;
-        console.log('Preferences API PUT - Using authenticated user ID:', userId);
-      }
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const payload = await request.json();
     const focusTopics = Array.isArray(payload.focusTopics) ? payload.focusTopics : undefined;
     const backlinkUrls = Array.isArray(payload.backlinkUrls) ? payload.backlinkUrls : undefined;
