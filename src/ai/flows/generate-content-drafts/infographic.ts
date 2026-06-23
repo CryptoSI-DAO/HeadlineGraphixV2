@@ -1,37 +1,19 @@
-import { ai, isAiReady } from '@/ai/genkit';
 import type { GenerateContentDraftsOutput } from './schemas';
 
+/**
+ * Ensures the output has an infographic URL.
+ *
+ * Previously this used Google Imagen via Genkit to auto-generate infographics.
+ * Genkit has been removed from the project. The infographic image is now either
+ * provided by the upstream model response, or falls back to a placeholder.
+ */
 export async function ensureInfographicUrl(
   output: GenerateContentDraftsOutput,
   headline: string,
-  { requireImagen }: { requireImagen: boolean }
+  _opts: { requireImagen: boolean }
 ): Promise<GenerateContentDraftsOutput> {
   if (output.infographic && output.infographic.startsWith('http')) {
     return output;
-  }
-
-  if (isAiReady) {
-    try {
-      const imageResponse = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: `An infographic about: ${headline}. Style: Clean, modern, professional.`,
-      });
-      const responseMedia = imageResponse.media;
-      const mediaPart = Array.isArray(responseMedia) ? responseMedia[0] : responseMedia;
-      if (mediaPart?.url) {
-        output.infographic = mediaPart.url;
-        return output;
-      }
-    } catch (error) {
-      if (requireImagen) {
-        throw new Error('Unable to generate infographic image URL.');
-      }
-      console.error('Unable to generate infographic with Imagen:', error);
-    }
-
-    if (requireImagen) {
-      throw new Error('Unable to generate infographic image URL.');
-    }
   }
 
   output.infographic = buildFallbackInfographicUrl(headline);

@@ -1,33 +1,29 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
-let browserClient: SupabaseClient | null = null;
-
-function getSupabaseUrl() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-  }
-  return url;
+/**
+ * Browser-side Supabase client using @supabase/ssr.
+ * Uses cookie-based session management (no localStorage).
+ *
+ * NEXT_PUBLIC_SUPABASE_URL should point at the proxy path (/supabase-proxy)
+ * so the browser never talks to Supabase directly — avoids CORS and
+ * mixed-content issues with self-hosted Supabase behind an HTTPS proxy.
+ */
+export function createBrowserClient_() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 }
 
-function getSupabaseAnonKey() {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
-  return key;
-}
+let browserClient: ReturnType<typeof createBrowserClient_> | null = null;
 
+/**
+ * Returns a singleton browser client (maintains the same API as the previous
+ * getBrowserClient so AuthContext and other consumers don't need to change).
+ */
 export function getBrowserClient() {
   if (!browserClient) {
-    browserClient = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
+    browserClient = createBrowserClient_();
   }
-
   return browserClient;
 }

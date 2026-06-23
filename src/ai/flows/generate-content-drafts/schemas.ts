@@ -1,4 +1,4 @@
-import { z } from 'genkit';
+import { z } from 'zod';
 
 export const MODEL_PROVIDERS = ['gemini', 'glm'] as const;
 export type ContentModelProvider = typeof MODEL_PROVIDERS[number];
