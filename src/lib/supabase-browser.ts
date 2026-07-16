@@ -12,6 +12,16 @@ export function createBrowserClient_() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      // The proxy route only handles HTTP, not WebSocket upgrades.
+      // Disable realtime to prevent the client from hanging on a
+      // ws:// connection it can never establish.
+      realtime: {
+        params: {
+          eventsPerSecond: 0,
+        },
+      },
+    },
   );
 }
 
