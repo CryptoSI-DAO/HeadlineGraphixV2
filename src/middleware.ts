@@ -30,8 +30,13 @@ export async function middleware(request: NextRequest) {
   // Create a server client that can read/write cookies via the response
   let supabaseResponse = NextResponse.next({ request });
 
+  // Server-side middleware needs an absolute URL to reach Supabase.
+  // Use SUPABASE_BACKEND_URL (set on Vercel) instead of the browser-facing
+  // NEXT_PUBLIC_SUPABASE_URL which may be a relative path.
+  const supabaseUrl = process.env.SUPABASE_BACKEND_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
