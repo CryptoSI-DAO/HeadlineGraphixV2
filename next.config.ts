@@ -1,12 +1,32 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://db.cryptosidao.org wss://db.cryptosidao.org https://vitals.vercel-insights.com",
+              "frame-ancestors 'none'",
+            ].join('; '),
+          },
+        ],
+      },
+    ];
   },
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {
