@@ -447,9 +447,9 @@ SUPABASE_DB_PASSWORD=optional_local_db_password
 
 # Keep other API keys unchanged
 GOOGLE_GENAI_API_KEY=
-OPENROUTER_API_KEY=REMOVED
-ZAI_API_KEY=REMOVED
-OPENAI_API_KEY=REMOVED
+OPENROUTER_API_KEY=your_openrouter_api_key
+ZAI_API_KEY=your_zai_api_key
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 **Note**: The `SUPABASE_SERVICE_ROLE_KEY` needs to be retrieved from the Supabase Dashboard:
