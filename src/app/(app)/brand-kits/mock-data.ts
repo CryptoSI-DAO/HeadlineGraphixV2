@@ -11,6 +11,8 @@ export const mockBrandPresets: BrandPreset[] = [
     artStyle: 'Afro-Futuristic Minimalism',
     logoUrl: 'https://picsum.photos/seed/afroball/40/40',
     logoAlt: 'Afroball connect logo',
+    focusTopics: ['African Football', 'Sports Tech', 'Youth Development'],
+    backlinkUrls: ['https://afroball.com', 'https://afroball.com/blog'],
   },
   {
     id: '2',
@@ -22,6 +24,8 @@ export const mockBrandPresets: BrandPreset[] = [
     artStyle: 'Geometric',
     logoUrl: 'https://picsum.photos/seed/lex/40/40',
     logoAlt: 'Lex Consulting logo',
+    focusTopics: ['Legal Tech', 'Compliance', 'Corporate Law'],
+    backlinkUrls: ['https://lexconsulting.com'],
   },
   {
     id: '3',
@@ -33,5 +37,7 @@ export const mockBrandPresets: BrandPreset[] = [
     artStyle: 'Cartoon',
     logoUrl: 'https://picsum.photos/seed/waffle/40/40',
     logoAlt: 'Crypto Waffle logo',
+    focusTopics: ['Cryptocurrency', 'DeFi', 'Web3 Gaming'],
+    backlinkUrls: ['https://cryptowaffle.io'],
   },
 ];

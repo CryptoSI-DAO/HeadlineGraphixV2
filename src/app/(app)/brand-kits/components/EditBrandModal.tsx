@@ -22,6 +22,9 @@ import {
 import type { BrandPreset } from '../types';
 import { useAuth } from '@/context/AuthContext';
 
+const MAX_TOPICS = 3;
+const MAX_BACKLINKS = 3;
+
 export const EditBrandModal = ({
   preset,
   onClose,
@@ -46,6 +49,23 @@ export const EditBrandModal = ({
   const isArtStyleOther = !['Geometric', 'Cartoon', 'Minimalist'].includes(preset.artStyle);
   const isNewBrand = !preset.id || preset.id.startsWith('empty-');
 
+  const topics = (preset.focusTopics ?? []).slice(0, MAX_TOPICS);
+  while (topics.length < MAX_TOPICS) topics.push('');
+  const backlinks = (preset.backlinkUrls ?? []).slice(0, MAX_BACKLINKS);
+  while (backlinks.length < MAX_BACKLINKS) backlinks.push('');
+
+  const handleTopicChange = (index: number, value: string) => {
+    const updated = [...topics];
+    updated[index] = value;
+    onFieldChange('focusTopics', JSON.stringify(updated.filter(Boolean)));
+  };
+
+  const handleBacklinkChange = (index: number, value: string) => {
+    const updated = [...backlinks];
+    updated[index] = value;
+    onFieldChange('backlinkUrls', JSON.stringify(updated.filter(Boolean)));
+  };
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -60,6 +80,9 @@ export const EditBrandModal = ({
   };
 
   const handleSave = () => {
+    // On save, parse the JSON strings back since onFieldChange stores them as JSON strings
+    // The parent component's handleFieldChange stores raw strings, but focusTopics/backlinkUrls
+    // are arrays. We need to ensure they're sent as arrays.
     onSave(logoFile || undefined);
     setLogoFile(null);
     setLogoPreview('');
@@ -146,14 +169,15 @@ export const EditBrandModal = ({
 
   return (
     <Dialog open={!!preset} onOpenChange={handleCancel}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isNewBrand ? 'Add New Brand' : 'Edit Brand'}</DialogTitle>
           <DialogDescription>
-            Update the brand details, colors, and logo for this kit.
+            Update brand details, colors, logo, topics, and backlinks.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {/* Logo */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label htmlFor="logo-upload" className="sm:text-right">
               Logo
@@ -194,6 +218,8 @@ export const EditBrandModal = ({
               )}
             </div>
           </div>
+
+          {/* Logo Alt Text */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label htmlFor="logo-alt" className="sm:text-right">
               Logo Alt Text
@@ -206,6 +232,8 @@ export const EditBrandModal = ({
               placeholder="Brand logo"
             />
           </div>
+
+          {/* Brand Name */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label htmlFor="brand-name" className="sm:text-right">
               Brand Name
@@ -223,45 +251,31 @@ export const EditBrandModal = ({
               className="sm:col-span-3"
             />
           </div>
+
+          {/* Colors */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label className="sm:text-right">Primary Color</Label>
             <div className="flex items-center gap-2 sm:col-span-3">
-              <div
-                className="w-8 h-8 rounded-md border"
-                style={{ backgroundColor: preset.primaryColor }}
-              />
-              <Input
-                value={preset.primaryColor}
-                onChange={e => onFieldChange('primaryColor', e.target.value)}
-              />
+              <div className="w-8 h-8 rounded-md border shrink-0" style={{ backgroundColor: preset.primaryColor }} />
+              <Input value={preset.primaryColor} onChange={e => onFieldChange('primaryColor', e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label className="sm:text-right">Secondary Color</Label>
             <div className="flex items-center gap-2 sm:col-span-3">
-              <div
-                className="w-8 h-8 rounded-md border"
-                style={{ backgroundColor: preset.secondaryColor }}
-              />
-              <Input
-                value={preset.secondaryColor}
-                onChange={e => onFieldChange('secondaryColor', e.target.value)}
-              />
+              <div className="w-8 h-8 rounded-md border shrink-0" style={{ backgroundColor: preset.secondaryColor }} />
+              <Input value={preset.secondaryColor} onChange={e => onFieldChange('secondaryColor', e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label className="sm:text-right">Trim Color</Label>
             <div className="flex items-center gap-2 sm:col-span-3">
-              <div
-                className="w-8 h-8 rounded-md border"
-                style={{ backgroundColor: preset.trimColor }}
-              />
-              <Input
-                value={preset.trimColor}
-                onChange={e => onFieldChange('trimColor', e.target.value)}
-              />
+              <div className="w-8 h-8 rounded-md border shrink-0" style={{ backgroundColor: preset.trimColor }} />
+              <Input value={preset.trimColor} onChange={e => onFieldChange('trimColor', e.target.value)} />
             </div>
           </div>
+
+          {/* Font */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label htmlFor="font-family" className="sm:text-right">
               Font Family
@@ -273,6 +287,8 @@ export const EditBrandModal = ({
               className="sm:col-span-3"
             />
           </div>
+
+          {/* Art Style */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
             <Label htmlFor="art-style" className="sm:text-right">
               Art Style
@@ -307,7 +323,46 @@ export const EditBrandModal = ({
               )}
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="col-span-full border-t pt-4 mt-1">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Content Topics & Backlinks
+            </h4>
+            <p className="text-xs text-muted-foreground mb-4">
+              These topics and backlinks are used when generating headlines and content for this brand.
+            </p>
+          </div>
+
+          {/* Focus Topics */}
+          <div className="col-span-full space-y-2">
+            <Label className="text-sm font-medium">Focus Topics (max 3)</Label>
+            <p className="text-xs text-muted-foreground">Topics used to fetch relevant headlines for this brand.</p>
+            {topics.map((topic, index) => (
+              <Input
+                key={`topic-${index}`}
+                value={topic}
+                onChange={e => handleTopicChange(index, e.target.value)}
+                placeholder={`Topic #${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Backlink URLs */}
+          <div className="col-span-full space-y-2">
+            <Label className="text-sm font-medium">Backlink URLs (max 3)</Label>
+            <p className="text-xs text-muted-foreground">These links are woven into generated content for this brand.</p>
+            {backlinks.map((url, index) => (
+              <Input
+                key={`backlink-${index}`}
+                value={url}
+                onChange={e => handleBacklinkChange(index, e.target.value)}
+                placeholder={`https://example.com/blog #${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
+
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" onClick={handleCancel}>

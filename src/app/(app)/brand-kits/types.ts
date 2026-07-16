@@ -8,4 +8,6 @@ export type BrandPreset = {
   artStyle: string;
   logoUrl: string;
   logoAlt: string;
+  focusTopics: string[];
+  backlinkUrls: string[];
 };

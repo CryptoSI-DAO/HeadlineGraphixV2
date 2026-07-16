@@ -45,7 +45,19 @@ export async function POST(request: Request) {
     const font = formData.get('font') as string;
     const artStyle = formData.get('artStyle') as string;
     const logoAlt = formData.get('logoAlt') as string | null;
+    const focusTopicsRaw = formData.get('focusTopics') as string | null;
+    const backlinkUrlsRaw = formData.get('backlinkUrls') as string | null;
     const logoFile = formData.get('logo') as File | null;
+
+    // Parse JSON arrays sent from the client
+    let focusTopics: string[] = [];
+    let backlinkUrls: string[] = [];
+    try {
+      focusTopics = focusTopicsRaw ? JSON.parse(focusTopicsRaw) : [];
+      backlinkUrls = backlinkUrlsRaw ? JSON.parse(backlinkUrlsRaw) : [];
+    } catch {
+      // If JSON parse fails, default to empty arrays
+    }
 
     if (!name || !primaryColor || !secondaryColor || !trimColor || !font || !artStyle) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -102,6 +114,8 @@ export async function POST(request: Request) {
       font,
       art_style: artStyle,
       logo_alt: logoAlt ?? null,
+      focus_topics: focusTopics,
+      backlink_urls: backlinkUrls,
     };
 
     if (logoStoragePath) {
@@ -153,6 +167,8 @@ export async function POST(request: Request) {
       logoStoragePath: data.logo_storage_path ?? undefined,
       logoUrl: data.logo_url ?? undefined,
       logoAlt: data.logo_alt ?? undefined,
+      focusTopics: data.focus_topics ?? [],
+      backlinkUrls: data.backlink_urls ?? [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };

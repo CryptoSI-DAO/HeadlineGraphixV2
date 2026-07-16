@@ -7,6 +7,14 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/comp
 import { Header } from '@/components/Header';
 import type { HeadlineGroup } from '@/lib/news';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { useBrandKits } from '@/hooks/use-brand-kits';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DEFAULT_NEWS_PROVIDER,
   NEWS_PROVIDER_META_MAP,
@@ -26,6 +34,8 @@ export default function HeadlinesPage() {
   const [error, setError] = useState<string | null>(null);
   const [provider, setProvider] = useState<NewsProviderId>(DEFAULT_NEWS_PROVIDER);
   const { preferences, isLoading: isPreferencesLoading } = useUserPreferences();
+  const { presets: brandPresets } = useBrandKits();
+  const [selectedBrandId, setSelectedBrandId] = useState<string>('default');
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('hg:news-provider') : null;
@@ -50,6 +60,12 @@ export default function HeadlinesPage() {
     }
   }, [provider]);
 
+  // Determine which topics to use: selected brand's topics, or user-level fallback
+  const selectedBrand = brandPresets.find(b => b.id === selectedBrandId);
+  const effectiveTopics = (selectedBrand?.focusTopics?.length ?? 0) > 0
+    ? selectedBrand!.focusTopics.filter(Boolean)
+    : preferences.focusTopics;
+
   useEffect(() => {
     if (isPreferencesLoading) return;
 
@@ -60,8 +76,12 @@ export default function HeadlinesPage() {
       setError(null);
 
       const params = new URLSearchParams();
-      if (preferences.focusTopics.length > 0) {
-        params.set('topics', preferences.focusTopics.join(','));
+      const topicsToUse = selectedBrand?.focusTopics?.length
+        ? selectedBrand.focusTopics.filter(Boolean)
+        : preferences.focusTopics;
+
+      if (topicsToUse.length > 0) {
+        params.set('topics', topicsToUse.join(','));
       }
       params.set('provider', provider);
 
@@ -92,18 +112,21 @@ export default function HeadlinesPage() {
 
     loadHeadlines();
     return () => controller.abort();
-  }, [preferences.focusTopics, isPreferencesLoading, provider]);
+  }, [effectiveTopics.join(','), isPreferencesLoading, provider]);
 
   const providerMeta = useMemo(() => NEWS_PROVIDER_META_MAP[provider], [provider]);
   const topicSummary = useMemo(() => {
     if (isPreferencesLoading) {
       return 'Loading topics...';
     }
-    if (preferences.focusTopics.length > 0) {
-      return `Based on topics: ${preferences.focusTopics.join(', ')}`;
+    if (selectedBrand && selectedBrand.focusTopics?.length) {
+      return `${selectedBrand.name}: ${selectedBrand.focusTopics.filter(Boolean).join(', ')}`;
+    }
+    if (effectiveTopics.length > 0) {
+      return `Based on topics: ${effectiveTopics.join(', ')}`;
     }
     return 'Based on your default topics';
-  }, [isPreferencesLoading, preferences.focusTopics]);
+  }, [isPreferencesLoading, effectiveTopics, selectedBrand]);
 
   return (
     <>
@@ -111,7 +134,25 @@ export default function HeadlinesPage() {
       <main className="flex-1 p-4 md:p-6">
         <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <TopicSummaryCard summary={topicSummary} />
-          <ProviderCard provider={provider} onChange={setProvider} meta={providerMeta} />
+          <div className="flex flex-col gap-3">
+            {brandPresets.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Brand:</span>
+                <Select value={selectedBrandId} onValueChange={setSelectedBrandId}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default topics</SelectItem>
+                    {brandPresets.map(brand => (
+                      <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <ProviderCard provider={provider} onChange={setProvider} meta={providerMeta} />
+          </div>
         </div>
         {error && (
           <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">

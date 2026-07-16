@@ -19,6 +19,8 @@ export type BrandPreset = {
   artStyle: string;
   logoUrl: string;
   logoAlt: string;
+  focusTopics: string[];
+  backlinkUrls: string[];
 };
 
 type BrandKitsResponse = {
@@ -111,6 +113,9 @@ export function useBrandKits() {
         if (data.logoAlt) {
           formData.append('logoAlt', data.logoAlt);
         }
+        // Send topics and backlinks as JSON arrays
+        formData.append('focusTopics', JSON.stringify(data.focusTopics ?? []));
+        formData.append('backlinkUrls', JSON.stringify(data.backlinkUrls ?? []));
         if (logoFile) {
           formData.append('logo', logoFile);
         }
@@ -212,6 +217,8 @@ export function useBrandKits() {
     artStyle: brand.artStyle,
     logoUrl: brand.logoUrl ?? '',
     logoAlt: brand.logoAlt ?? '',
+    focusTopics: brand.focusTopics ?? [],
+    backlinkUrls: brand.backlinkUrls ?? [],
   }));
 
   return {

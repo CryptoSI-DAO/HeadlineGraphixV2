@@ -25,6 +25,8 @@ export default function BrandKitsPage() {
       artStyle: '',
       logoUrl: '',
       logoAlt: '',
+      focusTopics: [],
+      backlinkUrls: [],
     });
   };
 
@@ -35,6 +37,17 @@ export default function BrandKitsPage() {
   const handleFieldChange = (field: keyof BrandPreset, value: string) => {
     setEditingPreset((current) => {
       if (!current) return current;
+
+      // focusTopics and backlinkUrls are sent as JSON strings from the modal
+      if (field === 'focusTopics' || field === 'backlinkUrls') {
+        try {
+          const parsed = JSON.parse(value);
+          return { ...current, [field]: Array.isArray(parsed) ? parsed : [] };
+        } catch {
+          return current;
+        }
+      }
+
       return { ...current, [field]: value };
     });
   };
@@ -70,6 +83,8 @@ export default function BrandKitsPage() {
       artStyle: '',
       logoUrl: '',
       logoAlt: '',
+      focusTopics: [],
+      backlinkUrls: [],
     });
   }
 

@@ -41,6 +41,8 @@ export function mapBrandKit(row: any): BrandKit {
     logoStoragePath: row.logo_storage_path ?? undefined,
     logoUrl: row.logo_url ?? undefined,
     logoAlt: row.logo_alt ?? undefined,
+    focusTopics: row.focus_topics ?? [],
+    backlinkUrls: row.backlink_urls ?? [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

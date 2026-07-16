@@ -18,6 +18,8 @@ export type BrandKit = {
   logoStoragePath?: string;
   logoUrl?: string;
   logoAlt?: string;
+  focusTopics: string[];
+  backlinkUrls: string[];
   createdAt: string;
   updatedAt: string;
 };

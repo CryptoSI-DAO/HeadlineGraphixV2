@@ -61,6 +61,12 @@ function GenerateContentPageInner() {
     }
   }, [brandPresets, brandTone]);
 
+  // Use the selected brand's backlinks (brand-level), falling back to user-level preferences
+  const selectedBrand = brandPresets.find(preset => preset.name === brandTone);
+  const effectiveBacklinkUrls = (selectedBrand?.backlinkUrls?.length ?? 0) > 0
+    ? selectedBrand!.backlinkUrls.filter(Boolean)
+    : preferences.backlinkUrls;
+
   const { articleContent, isFetchingArticle, resolvedArticleUrl } = useArticleContent({
     prefilledSummary,
     prefilledUrl,
@@ -92,7 +98,7 @@ function GenerateContentPageInner() {
     useFullArticle,
     resolvedArticleUrl,
     includeBacklinks,
-    backlinkUrls: preferences.backlinkUrls,
+    backlinkUrls: effectiveBacklinkUrls,
     brandTone,
     selectedImages,
     userAngle,

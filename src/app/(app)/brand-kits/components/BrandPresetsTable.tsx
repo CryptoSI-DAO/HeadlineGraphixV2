@@ -164,6 +164,29 @@ export const BrandPresetsTable = ({
                   <span><span className="font-medium text-foreground">Art:</span> {preset.artStyle || '—'}</span>
                 </div>
 
+                {/* Topics */}
+                {preset.focusTopics?.filter(Boolean).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {preset.focusTopics.filter(Boolean).map((topic, i) => (
+                      <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Backlinks */}
+                {preset.backlinkUrls?.filter(Boolean).length > 0 && (
+                  <div className="space-y-0.5">
+                    {preset.backlinkUrls.filter(Boolean).map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                         className="block text-xs text-muted-foreground hover:text-primary truncate">
+                        🔗 {url}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => onEdit(preset)}>
