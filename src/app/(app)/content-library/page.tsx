@@ -41,7 +41,7 @@ import { useAppContext } from '@/context/AppContext';
 import type { GeneratedContent } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Trash2, Eye, FileText, Plus, Library, MoreHorizontal } from 'lucide-react';
+import { Download, Trash2, Eye, FileText, Plus, Library, MoreHorizontal, Calendar } from 'lucide-react';
 
 const TOTAL_SLOTS = 10;
 
@@ -73,7 +73,8 @@ export default function ContentLibraryPage() {
     <>
       <Header title="Content Library" />
       <main className="flex-1 p-4 md:p-6">
-        <Card>
+        {/* Desktop: Table */}
+        <Card className="hidden md:block">
             <CardContent className="p-0">
                 <Table className="min-w-[700px]">
                     <TableHeader>
@@ -141,21 +142,87 @@ export default function ContentLibraryPage() {
                 )}
             </CardContent>
         </Card>
+
+        {/* Mobile: Cards */}
+        <div className="md:hidden space-y-3">
+          {slots.map((item, index) => item ? (
+            <Card key={item.id}>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {index + 1}
+                    </span>
+                    <Badge variant="secondary" className="shrink-0">{item.config.brandTone}</Badge>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewClick(item)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        <span>View</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Download className="mr-2 h-4 w-4" />
+                        <span>Download</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(item)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <h3 className="font-semibold text-sm leading-snug">{item.headline}</h3>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <FileText size={12} />
+                    {item.type}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={12} />
+                    {item.date.toLocaleDateString()}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card key={`empty-${index}`} className="opacity-50">
+              <CardContent className="p-4 flex items-center gap-2 text-muted-foreground">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                  {index + 1}
+                </span>
+                <span className="italic text-sm">Empty Slot</span>
+              </CardContent>
+            </Card>
+          ))}
+          {history.length === 0 && (
+            <div className="text-center text-muted-foreground py-16 flex flex-col items-center">
+              <Library className="h-10 w-10 mb-4 text-primary" />
+              <h3 className="text-lg font-semibold mb-1">Your Library is Empty</h3>
+              <p className="max-w-xs">Generated content will appear here once you save it.</p>
+            </div>
+          )}
+        </div>
       </main>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedItem?.headline}</DialogTitle>
+            <DialogTitle className="pr-8">{selectedItem?.headline}</DialogTitle>
             <DialogDescription>
               Generated on {selectedItem?.date.toLocaleString()} with a &lsquo;{selectedItem?.config.brandTone}&rsquo; tone.
             </DialogDescription>
           </DialogHeader>
           {selectedItem && (
              <Tabs defaultValue="blog" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="blog">Blog Post</TabsTrigger>
-                  <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+                <TabsList className="w-full">
+                  <TabsTrigger value="blog" className="flex-1">Blog Post</TabsTrigger>
+                  <TabsTrigger value="linkedin" className="flex-1">LinkedIn</TabsTrigger>
                 </TabsList>
                 <TabsContent value="blog" className="mt-4 max-h-[50vh] overflow-y-auto bg-muted p-4 rounded-md text-sm">
                     <pre className="whitespace-pre-wrap font-sans">{selectedItem.drafts.blogPost}</pre>
