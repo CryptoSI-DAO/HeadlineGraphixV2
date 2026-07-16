@@ -84,6 +84,6 @@ export const config = {
      * - /favicon.ico, robots.txt, manifest.json
      * - Files with extensions (images, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|manifest.json).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|manifest.json|api|supabase-proxy).*)',
   ],
 };
